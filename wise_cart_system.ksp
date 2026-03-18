@@ -1,16 +1,16 @@
 {
-	"appName":"WiseCart慧购车",
-	"appCode":"wise_cart_system",
-	"serverUrl":"http://localhost:54801",
-	"appInfo":{
-		"id":"658e863ab3b9441cab2060cc4b2de649",
-		"layout":"2",
-		"security":"http",
-		"selectModule":"kesplus_workflow"
-	},
-	"supportVersion":{
-		"createVersion":"v3.2.0",
-		"maxVersion":"v3.2.0",
-		"minVersion":"v3.2.0"
-	}
+  "appName": "WiseCart慧购车",
+  "appCode": "wise_cart_system",
+  "serverUrl": "http://localhost:54801",
+  "appInfo": {
+    "id": "658e863ab3b9441cab2060cc4b2de649",
+    "layout": "2",
+    "security": "http",
+    "selectModule": "kesplus_workflow"
+  },
+  "supportVersion": {
+    "createVersion": "v3.2.0",
+    "maxVersion": "v3.2.0",
+    "minVersion": "v3.2.0"
+  }
 }

@@ -1,0 +1,11 @@
+CREATE OR REPLACE VIEW kesplus_workflow.kesplus_v_draft WITH (SECURITY_INVOKER)
+	 AS   SELECT
+    "id"
+    , "form_name"
+    , "form_path"
+    , "title"
+    , "create_by_name"
+    , "config_name"
+    , "create_time"
+    , "update_time"
+FROM "kesplus_workflow"."kesplus_draft";
