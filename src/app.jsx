@@ -4,6 +4,7 @@ import { defineRuntimeConfig } from "@kesplus/kesplus";
 export function defineAccessConfig(memo) {
   memo.ignoreAccess ??= []
   memo.ignoreAccess.push('/home');
+  memo.ignoreAccess.push('/user-info');
   return memo;
 }
 

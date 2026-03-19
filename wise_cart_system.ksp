@@ -1,7 +1,7 @@
 {
   "appName": "WiseCart慧购车",
   "appCode": "wise_cart_system",
-  "serverUrl": "http://localhost:54801",
+  "serverUrl": "http://100.69.60.121:54801",
   "appInfo": {
     "id": "658e863ab3b9441cab2060cc4b2de649",
     "layout": "2",

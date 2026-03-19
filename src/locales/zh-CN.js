@@ -11,14 +11,13 @@ export default {
     remember: "记住登录",
     verifyCode: "请输入验证码",
     forgetPassword: "忘记密码",
-    ldap: "LDAP登录",
+    ldap: "LDAP 登录",
   },
   layout: {
     back: "返回上一页",
     pageNotFound: "页面找不到了",
-    pageNoAuth: "没有访问权限，请联系管理人员",
+    pageNoAuth: "没有访问权限，请联系管理员",
   },
-
   message: {
     user: {
       dropdown2: "修改密码",
@@ -37,5 +36,17 @@ export default {
     hsadd: "新增",
     hsedit: "编辑",
     hsdelete: "删除",
+  },
+  userInfo: {
+    title: "用户信息",
+    username: "用户名",
+    name: "姓名",
+    phone: "手机号",
+    email: "邮箱",
+    role: "角色",
+    search: "查询",
+    reset: "重置",
+    usernamePlaceholder: "请输入用户名",
+    phonePlaceholder: "请输入手机号",
   },
 };
