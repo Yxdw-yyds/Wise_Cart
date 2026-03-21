@@ -1,105 +1,105 @@
 <template>
   <div class="mall-page">
     <header class="mall-header">
-      <div class="brand">WiseCart Mall</div>
+      <div class="brand" @click="router.push('/user-mall')">WiseCart 用户商城</div>
       <div class="header-actions">
-        <el-input v-model="keyword" placeholder="Search products" class="search-input" clearable />
-        <el-button type="primary">Search</el-button>
-        <el-button @click="showProfile = !showProfile">My Profile</el-button>
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索商品"
+          class="search-input"
+          clearable
+          @keyup.enter="onSearch"
+        />
+        <el-button type="primary" @click="onSearch">搜索</el-button>
+        <el-button @click="router.push('/user-profile')">用户画像</el-button>
       </div>
     </header>
 
-    <section class="banner">
-      <div class="banner-title">New Season Deals</div>
-      <div class="banner-subtitle">Smart recommendations for you</div>
+    <section class="hero">
+      <div class="hero-title">猜你喜欢 + Top50 兴趣榜</div>
+      <div class="hero-subtitle">基于行为标签的可解释推荐</div>
     </section>
 
-    <section class="section">
+    <section class="section-card">
       <div class="section-head">
-        <h3>Products</h3>
+        <h3>商品流</h3>
       </div>
-      <div class="goods-grid">
-        <article v-for="item in filteredProducts" :key="item.id" class="goods-card">
-          <div class="goods-cover">{{ item.category }}</div>
-          <div class="goods-name">{{ item.name }}</div>
-          <div class="goods-meta">
-            <span class="price">CNY {{ item.price }}</span>
-            <el-button size="small" type="primary" plain>Add to Cart</el-button>
+      <div class="products-grid">
+        <article v-for="item in filteredProducts" :key="item.id" class="product-card">
+          <div class="cover" :style="{ background: item.imgBg }">{{ categoryLabel(item.category) }}</div>
+          <div class="name">{{ item.name }}</div>
+          <div class="meta-line">
+            <span class="price">¥{{ item.price }}</span>
+            <span class="shop">{{ item.shop }}</span>
           </div>
         </article>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section-card">
       <div class="section-head">
-        <h3>Guess You Like</h3>
+        <h3>猜你喜欢</h3>
+        <el-button link type="primary" @click="refreshGuess">换一批</el-button>
       </div>
       <el-row :gutter="12">
-        <el-col v-for="item in guessLike" :key="item.id" :xs="24" :sm="12" :lg="8">
-          <div class="like-card">
-            <div class="like-name">{{ item.name }}</div>
-            <div class="like-reason">{{ item.reason }}</div>
+        <el-col v-for="item in guessLikeList" :key="item.productId" :xs="24" :sm="12" :lg="8">
+          <div class="guess-card">
+            <div class="guess-name">{{ item.name }}</div>
+            <div class="guess-score">推荐分：{{ item.score }}</div>
+            <div class="guess-reason">推荐理由：{{ item.reason }}</div>
           </div>
         </el-col>
       </el-row>
+      <el-empty v-if="!guessLikeList.length" description="暂无推荐，已回退热门商品" />
     </section>
 
-    <section class="section">
+    <section class="section-card">
       <div class="section-head">
-        <h3>Top 50 Interested Products</h3>
+        <h3>用户感兴趣 Top50 商品</h3>
       </div>
-      <el-table :data="top50Goods" border>
-        <el-table-column prop="rank" label="Rank" width="80" />
-        <el-table-column prop="name" label="Product Name" min-width="240" />
-        <el-table-column prop="category" label="Category" width="130" />
-        <el-table-column prop="interest" label="Interest %" width="120" />
-        <el-table-column prop="ctr" label="CTR" width="100" />
+      <div class="toolbar">
+        <el-select v-model="activeCategory" class="filter-item">
+          <el-option label="全部类目" value="all" />
+          <el-option v-for="(label, key) in categoryLabels" :key="key" :label="label" :value="key" />
+        </el-select>
+        <el-select v-model="priceBand" class="filter-item">
+          <el-option label="全部价格带" value="all" />
+          <el-option label="0-50" value="low" />
+          <el-option label="50-150" value="mid" />
+          <el-option label="150+" value="high" />
+        </el-select>
+        <el-select v-model="top50Sort" class="filter-item">
+          <el-option label="兴趣优先" value="interest" />
+          <el-option label="热度优先" value="hot" />
+        </el-select>
+        <el-switch v-model="onlyOnline" inline-prompt active-text="仅在售" inactive-text="全部" />
+      </div>
+      <el-table :data="top50List" border>
+        <el-table-column prop="rank" label="排名" width="70" />
+        <el-table-column prop="name" label="商品名" min-width="230" />
+        <el-table-column label="类目" width="120">
+          <template #default="{ row }">{{ categoryLabel(row.category) }}</template>
+        </el-table-column>
+        <el-table-column prop="interestScore" label="兴趣分" width="100" />
+        <el-table-column prop="hotScore" label="热度分" width="100" />
+        <el-table-column prop="ctr" label="CTR%" width="90" />
+        <el-table-column prop="reason" label="推荐理由" min-width="220" />
       </el-table>
-    </section>
-
-    <section v-if="showProfile" class="section profile-section">
-      <div class="section-head">
-        <h3>User Persona</h3>
-      </div>
-      <el-row :gutter="14">
-        <el-col :xs="24" :lg="14">
-          <el-card shadow="never">
-            <div class="profile-title">Category Interest Percentage</div>
-            <div class="progress-list">
-              <div v-for="item in interests" :key="item.name" class="progress-item">
-                <div class="progress-row">
-                  <span>{{ item.name }}</span>
-                  <strong>{{ item.percent }}%</strong>
-                </div>
-                <el-progress :percentage="item.percent" :stroke-width="14" />
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :xs="24" :lg="10">
-          <el-card shadow="never">
-            <div class="profile-title">Tags</div>
-            <div class="tags">
-              <el-tag v-for="tag in tags" :key="tag">{{ tag }}</el-tag>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
     </section>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import { defineRouteMeta } from "@kesplus/kesplus";
+import { useUserMallData } from "@/composables/useUserMallData";
 
-defineOptions({
-  name: "UserMallPage",
-});
+defineOptions({ name: "UserMallPage" });
 
 defineRouteMeta({
   name: "userMall",
-  title: "User Mall",
+  title: "用户商城",
   icon: "Goods",
   isKeepAlive: true,
   anonymous: true,
@@ -108,59 +108,38 @@ defineRouteMeta({
   },
 });
 
-const keyword = ref("");
-const showProfile = ref(true);
-
-const products = ref([
-  { id: 1, category: "Drink", name: "Sparkling Water 500ml", price: "6.90" },
-  { id: 2, category: "Snack", name: "Mixed Nuts 250g", price: "29.90" },
-  { id: 3, category: "Daily", name: "Laundry Liquid 2kg", price: "39.80" },
-  { id: 4, category: "Food", name: "Rice 5kg", price: "59.90" },
-  { id: 5, category: "Beverage", name: "Craft Beer 330ml*6", price: "45.00" },
-  { id: 6, category: "Home", name: "Kitchen Wipes 80pcs", price: "12.90" },
-  { id: 7, category: "Beauty", name: "Moisturizing Mask 10pcs", price: "49.00" },
-  { id: 8, category: "Tech", name: "Wireless Earbuds", price: "159.00" },
-]);
+const router = useRouter();
+const searchKeyword = ref("");
+const {
+  products,
+  guessLikeList,
+  top50List,
+  activeCategory,
+  priceBand,
+  onlyOnline,
+  top50Sort,
+  refreshGuess,
+  categoryLabels,
+} = useUserMallData();
 
 const filteredProducts = computed(() => {
-  const kw = keyword.value.trim().toLowerCase();
-  if (!kw) return products.value;
-  return products.value.filter((p) => p.name.toLowerCase().includes(kw) || p.category.toLowerCase().includes(kw));
+  const kw = searchKeyword.value.trim().toLowerCase();
+  return products.value.filter((p) => {
+    const matchedKeyword = !kw || p.name.toLowerCase().includes(kw);
+    const matchedCategory = activeCategory.value === "all" || p.category === activeCategory.value;
+    return matchedKeyword && matchedCategory;
+  });
 });
 
-const guessLike = ref([
-  { id: 1, name: "High Protein Yogurt", reason: "Because you viewed healthy drinks" },
-  { id: 2, name: "Dark Chocolate Bar", reason: "Similar users liked this product" },
-  { id: 3, name: "Cold Brew Coffee", reason: "Because you prefer beverage category" },
-]);
-
-const top50Goods = ref(
-  Array.from({ length: 50 }).map((_, i) => ({
-    rank: i + 1,
-    name: `Popular Product ${i + 1}`,
-    category: ["Drink", "Snack", "Daily", "Food", "Beverage"][i % 5],
-    interest: 92 - (i % 18),
-    ctr: `${(12.5 - i * 0.11).toFixed(1)}%`,
-  }))
-);
-
-const interests = ref([
-  { name: "Drink", percent: 28 },
-  { name: "Snack", percent: 22 },
-  { name: "Beverage", percent: 16 },
-  { name: "Daily", percent: 14 },
-  { name: "Food", percent: 12 },
-  { name: "Home", percent: 8 },
-]);
-
-const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shopper", "Healthy Lifestyle"]);
+const onSearch = () => {};
+const categoryLabel = (key) => categoryLabels[key] || key;
 </script>
 
 <style scoped>
 .mall-page {
   min-height: 100vh;
-  background: #f4f6fb;
-  padding: 16px;
+  background: #f5f7fb;
+  padding: 14px;
 }
 
 .mall-header {
@@ -168,136 +147,140 @@ const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shop
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
   background: #fff;
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
 .brand {
   font-size: 24px;
   font-weight: 800;
+  cursor: pointer;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .search-input {
-  width: 320px;
+  width: 300px;
 }
 
-.banner {
-  margin-top: 14px;
-  border-radius: 16px;
-  padding: 28px;
-  background: linear-gradient(120deg, #4f7cff, #7a93ff 55%, #8b8cff);
+.hero {
+  margin-top: 12px;
+  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(120deg, #ff7a18, #ffb347);
   color: #fff;
 }
 
-.banner-title {
-  font-size: 30px;
+.hero-title {
+  font-size: 28px;
   font-weight: 800;
 }
 
-.banner-subtitle {
+.hero-subtitle {
   margin-top: 8px;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
-.section {
-  margin-top: 14px;
+.section-card {
+  margin-top: 12px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 14px;
-  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .section-head h3 {
-  margin: 0 0 12px;
+  margin: 0;
 }
 
-.goods-grid {
+.products-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.goods-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.goods-cover {
-  height: 72px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #dbe7ff, #ebf2ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-}
-
-.goods-name {
-  margin-top: 10px;
-  font-weight: 600;
-}
-
-.goods-meta {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.price {
-  color: #e11d48;
-  font-weight: 700;
-}
-
-.like-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.like-name {
-  font-weight: 700;
-}
-
-.like-reason {
-  margin-top: 6px;
-  color: #64748b;
-}
-
-.profile-section .profile-title {
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.progress-list {
-  display: grid;
   gap: 10px;
 }
 
-.progress-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
+.product-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
 }
 
-.tags {
+.cover {
+  height: 90px;
+  border-radius: 10px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.name {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.meta-line {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.price {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.guess-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.guess-name {
+  font-weight: 700;
+}
+
+.guess-score {
+  margin-top: 6px;
+  color: #334155;
+}
+
+.guess-reason {
+  margin-top: 4px;
+  color: #64748b;
+}
+
+.toolbar {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 }
 
+.filter-item {
+  width: 150px;
+}
+
 @media (max-width: 1200px) {
-  .goods-grid {
+  .products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -312,7 +295,7 @@ const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shop
     width: 100%;
   }
 
-  .goods-grid {
+  .products-grid {
     grid-template-columns: 1fr;
   }
 }

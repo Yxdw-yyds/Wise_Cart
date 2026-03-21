@@ -53,9 +53,14 @@
             {{ $t("login.login") }}
           </el-button>
         </el-form-item>
+        <el-form-item v-if="loginRole === 'admin'">
+          <el-button class="w-full" plain type="button" @click.prevent="forceEnterAdmin">
+            强制进入管理员后台
+          </el-button>
+        </el-form-item>
         <el-form-item v-if="loginRole === 'user'">
-          <el-button class="w-full" plain @click="forceEnterUserHome">
-            Force Enter User Home
+          <el-button class="w-full" plain @click="forceEnterUserMall">
+            强制进入用户商城
           </el-button>
         </el-form-item>
 
@@ -123,9 +128,9 @@ const handleLogin = async (isLdap = false) => {
       const password = String(baseForm.password || "").trim();
       if (username === DEMO_USER.username && password === DEMO_USER.password) {
         localLoginError.value = "";
-        forceEnterUserHome();
+        forceEnterUserMall();
       } else {
-        localLoginError.value = "User login failed. Demo: mall_user / mall123456";
+        localLoginError.value = "用户账号或密码错误（Demo: mall_user / mall123456）";
       }
       return;
     }
@@ -138,10 +143,31 @@ const handleLogin = async (isLdap = false) => {
   }
 };
 
-const forceEnterUserHome = () => {
+const forceEnterUserMall = () => {
   localStorage.setItem("loginRole", "user");
   window.location.assign(
     `${window.location.origin}${window.location.pathname}#/user-mall?ts=${Date.now()}`
+  );
+};
+
+const forceEnterAdmin = () => {
+  localStorage.setItem("loginRole", "admin");
+  const demoToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlZmZlY3Rfc2Vjb25kIjo5OTk5OTk5OTk5LCJpZCI6ImRlbW8iLCJhcHBJZCI6MX0.demo";
+  const demoUserInfo = {
+    token: demoToken,
+    refreshToken: demoToken,
+    tokenCreateTime: Math.floor(Date.now()),
+    realName: "应用管理员",
+    roles: "admin",
+    permission: ["*"],
+    menus: [],
+    userId: "demo-admin",
+    id: "demo-admin",
+  };
+  localStorage.setItem("userInfo", JSON.stringify(demoUserInfo));
+  window.location.assign(
+    `${window.location.origin}${window.location.pathname}#/home?ts=${Date.now()}`
   );
 };
 </script>

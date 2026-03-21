@@ -1,20 +1,20 @@
 <template>
-  <div class="user-profile-page">
-    <el-card shadow="never" class="profile-head">
-      <div class="title">User Profile</div>
-      <div class="subtitle">Interest percentages by product category</div>
+  <div class="profile-page">
+    <el-card shadow="never" class="head-card">
+      <div class="title">用户画像</div>
+      <div class="subtitle">与猜你喜欢共享同一兴趣向量，保证推荐一致</div>
     </el-card>
 
     <el-row :gutter="12">
       <el-col :xs="24" :lg="14">
-        <el-card shadow="never" class="profile-card">
+        <el-card shadow="never" class="panel-card">
           <template #header>
-            <div class="card-title">Interest Distribution</div>
+            <div class="panel-title">类目兴趣百分比</div>
           </template>
           <div class="progress-list">
-            <div v-for="item in interests" :key="item.name" class="progress-item">
-              <div class="label-row">
-                <span>{{ item.name }}</span>
+            <div v-for="item in percentItems" :key="item.key" class="progress-item">
+              <div class="row-head">
+                <span>{{ item.label }}</span>
                 <b>{{ item.percent }}%</b>
               </div>
               <el-progress :percentage="item.percent" :stroke-width="14" />
@@ -23,16 +23,14 @@
         </el-card>
       </el-col>
       <el-col :xs="24" :lg="10">
-        <el-card shadow="never" class="profile-card">
+        <el-card shadow="never" class="panel-card">
           <template #header>
-            <div class="card-title">User Tags</div>
+            <div class="panel-title">用户标签</div>
           </template>
           <div class="tags">
-            <el-tag v-for="tag in tags" :key="tag" class="tag-item">{{ tag }}</el-tag>
+            <el-tag v-for="tag in userProfile.tags" :key="tag">{{ tag }}</el-tag>
           </div>
-          <div class="summary">
-            Summary: strongest interests are <b>Drink / Snack</b>, with higher promotion sensitivity.
-          </div>
+          <div class="summary">{{ userProfile.summary }}</div>
         </el-card>
       </el-col>
     </el-row>
@@ -40,41 +38,41 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed } from "vue";
 import { defineRouteMeta } from "@kesplus/kesplus";
+import { useUserMallData } from "@/composables/useUserMallData";
 
-defineOptions({
-  name: "UserProfilePage",
-});
+defineOptions({ name: "UserProfilePage" });
 
 defineRouteMeta({
   name: "userProfile",
-  title: "User Profile",
+  title: "用户画像",
   icon: "PieChart",
   isKeepAlive: true,
+  layout: {
+    navigation: null,
+  },
 });
 
-const interests = ref([
-  { name: "Drink", percent: 28 },
-  { name: "Snack", percent: 22 },
-  { name: "Beverage", percent: 16 },
-  { name: "Daily", percent: 14 },
-  { name: "Food", percent: 12 },
-  { name: "Home", percent: 8 },
-]);
+const { userProfile, categoryLabels } = useUserMallData();
 
-const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shopper", "Healthy Lifestyle"]);
+const percentItems = computed(() =>
+  Object.entries(userProfile.value.categoryPercents)
+    .map(([key, percent]) => ({ key, label: categoryLabels[key] || key, percent }))
+    .sort((a, b) => b.percent - a.percent)
+);
 </script>
 
 <style scoped>
-.user-profile-page {
-  height: calc(100vh - 86px);
+.profile-page {
+  min-height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 12px;
+  background: #f5f7fb;
 }
 
-.profile-head {
+.head-card {
   margin-bottom: 12px;
 }
 
@@ -89,13 +87,13 @@ const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shop
   color: #64748b;
 }
 
-.profile-card {
-  min-height: 380px;
+.panel-card {
+  min-height: 390px;
 }
 
-.card-title {
+.panel-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .progress-list {
@@ -103,9 +101,8 @@ const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shop
   gap: 12px;
 }
 
-.label-row {
+.row-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
 }
@@ -113,19 +110,15 @@ const tags = ref(["High Activity", "Price Sensitive", "New Product", "Night Shop
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-}
-
-.tag-item {
-  padding: 4px 10px;
+  gap: 8px;
 }
 
 .summary {
-  margin-top: 16px;
-  padding: 12px;
+  margin-top: 14px;
   border-radius: 12px;
-  background: #f8fbff;
-  color: #334155;
+  padding: 12px;
   line-height: 1.6;
+  color: #334155;
+  background: #f8fbff;
 }
 </style>

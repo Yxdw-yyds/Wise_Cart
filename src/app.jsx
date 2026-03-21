@@ -11,6 +11,7 @@ export function defineAccessConfig(memo) {
   memo.ignoreAccess.push("/avatar");
   memo.ignoreAccess.push("/user-home");
   memo.ignoreAccess.push("/user-mall");
+  memo.ignoreAccess.push("/user-profile");
   return memo;
 }
 
@@ -26,7 +27,7 @@ const ADMIN_ROUTES = [
   "/user-center",
 ];
 
-const USER_ROUTES = ["/user-home", "/user-mall"];
+const USER_ROUTES = ["/user-home", "/user-mall", "/user-profile"];
 
 function setRoutePathAttr(path) {
   document?.body?.setAttribute("data-route-path", path || "");
@@ -48,7 +49,7 @@ export function onAppCreated({ app }) {
   router?.beforeEach((to, from, next) => {
     const role = getRole();
     if (role === "user" && ADMIN_ROUTES.some((route) => to?.path?.startsWith(route))) {
-      next("/user-home");
+      next("/user-mall");
       return;
     }
     if (role === "admin" && USER_ROUTES.some((route) => to?.path?.startsWith(route))) {
