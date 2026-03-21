@@ -37,7 +37,7 @@
         <el-table-column prop="email" :label="$t('userInfo.email')" />
         <el-table-column prop="role" :label="$t('userInfo.role')" />
       
-<el-table-column prop="column6" label="column6"></el-table-column>
+<el-table-column prop="remark" :label="$t('userInfo.remark')" />
 </el-table>
 
     
@@ -67,6 +67,7 @@ const users = ref([
     phone: "13800000001",
     email: "zhangsan@example.com",
     role: "管理员",
+    remark: "",
   },
   {
     username: "lisi",
@@ -74,6 +75,7 @@ const users = ref([
     phone: "13800000002",
     email: "lisi@example.com",
     role: "业务员",
+    remark: "",
   },
   {
     username: "wangwu",
@@ -81,6 +83,7 @@ const users = ref([
     phone: "13800000003",
     email: "wangwu@example.com",
     role: "仓库员",
+    remark: "",
   },
 ]);
 

@@ -1,5 +1,15 @@
 export default {
   home: "Home",
+  "home.brand": "Wise Cart",
+  "home.searchPlaceholder": "Search for products",
+  "home.search": "Search",
+  "home.cart": "Cart",
+  "home.flashSale": "Flash Sale",
+  "home.endsIn": "Ends in",
+  "home.sold": "Sold",
+  "home.soldUnit": "",
+  "home.recommend": "Recommended for you",
+  "home.footer": "Quality products, shop with confidence",
   store: "Store",
   editor: "Editor",
   externalLink: "External Link",
@@ -40,5 +50,8 @@ export default {
     reset: "Reset",
     usernamePlaceholder: "Please input username",
     phonePlaceholder: "Please input phone number",
+    remark: "Remark",
   },
 };
+
+

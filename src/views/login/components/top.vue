@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute left-0 right-0 top-0 h-20 flex justify-between flex-items-center px-25 <sm:px-8"
+    class="absolute left-0 right-0 top-0 h-20 flex justify-between flex-items-center px-25 <sm:px-8 pointer-events-none"
   >
     <div class="flex flex-items-center">
       <img

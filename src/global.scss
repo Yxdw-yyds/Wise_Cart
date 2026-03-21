@@ -2,6 +2,7 @@
 @use "element-plus/theme-chalk/src/index.scss" as *;
 @use "element-plus/theme-chalk/src/table.scss" as *;
 @use "@kesplus/components/style.css" as *;
+@use "./styles/theme-tokens.scss" as *;
 
 
 /* Framework 框架区域*/
@@ -671,6 +672,44 @@
     padding-left: var(--k-block-padding-lr, 0);
     padding-right: var(--k-block-padding-lr, 0);
     padding-bottom: var(--k-block-padding-tb, 0);
+  }
+}
+// #endregion
+
+// #region topbar alignment + logo typography
+.layout-navbars-breadcrumb-index {
+  display: flex;
+  align-items: center;
+
+  .layout-navbars-breadcrumb {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .layout-navbars-breadcrumb-message {
+    margin-left: auto !important;
+    margin-right: 8px !important;
+  }
+
+  .layout-navbars-breadcrumb-user {
+    margin-left: 0 !important;
+    padding-right: 12px !important;
+  }
+}
+
+.layout-logo {
+  width: 280px !important;
+
+  span {
+    font-size: 26px !important;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    background: linear-gradient(120deg, #ffffff 0%, #d7ecff 35%, #b6eaff 68%, #e8dbff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 12px rgba(255, 255, 255, 0.2);
   }
 }
 // #endregion

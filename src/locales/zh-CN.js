@@ -1,5 +1,15 @@
 export default {
   home: "首页",
+  "home.brand": "智慧购物",
+  "home.searchPlaceholder": "请输入商品名称搜索",
+  "home.search": "搜索",
+  "home.cart": "购物车",
+  "home.flashSale": "限时抢购",
+  "home.endsIn": "距结束",
+  "home.sold": "已售",
+  "home.soldUnit": "件",
+  "home.recommend": "猜你喜欢",
+  "home.footer": "品质好物 放心购",
   store: "状态管理",
   editor: "编辑器",
   externalLink: "外部链接",
@@ -20,16 +30,17 @@ export default {
   },
   message: {
     user: {
+      myAccount: "我的",
       dropdown2: "修改密码",
       dropdown5: "退出登录",
     },
     tagsView: {
       refresh: "刷新",
       close: "关闭",
-      closeOther: "关闭其它",
+      closeOther: "关闭其他",
       closeAll: "全部关闭",
       fullscreen: "当前页全屏",
-      closeFullscreen: "关闭全屏",
+      closeFullscreen: "退出全屏",
     },
   },
   buttons: {
@@ -48,5 +59,6 @@ export default {
     reset: "重置",
     usernamePlaceholder: "请输入用户名",
     phonePlaceholder: "请输入手机号",
+    remark: "备注",
   },
 };
