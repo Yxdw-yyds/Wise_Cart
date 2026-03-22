@@ -61,3 +61,44 @@ export interface ThemeTokens {
   radiusMain: string;
   radiusSub: string;
 }
+export interface ModelManifest {
+  model: string;
+  dataset: string;
+  generatedAt: string;
+  artifacts: Record<string, string>;
+  checksums: Record<string, string>;
+  weights: {
+    path: string;
+    includedInFrontend: boolean;
+  };
+}
+
+export interface DatasetSummary {
+  dataset: string;
+  users: number;
+  items: number;
+  interactions: number;
+  avgActionsPerUser: number;
+  split: Record<string, { users?: number; items?: number; inters?: number; sparsity?: number }>;
+}
+
+export interface OfflineMetrics {
+  dataset: string;
+  bestEpoch: number | null;
+  bestValid: Record<string, number>;
+  bestTest: Record<string, number>;
+  sourceFiles: Record<string, string>;
+}
+
+export interface UserTopK {
+  dataset: string;
+  users: Record<string, string[]>;
+}
+
+export interface OpsSegmentEffect {
+  dataset: string;
+  audienceBuckets: { high: number; mid: number; low: number; total: number };
+  strategyReach: { recommend: number; recall: number; marketing: number; coupon: number };
+  groupEffects: Array<{ group: string; reach: number; click: number; convert: number; roi: number }>;
+  recommendCoverage: number;
+}
