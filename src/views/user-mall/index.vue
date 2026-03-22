@@ -1,17 +1,39 @@
 <template>
   <div class="mall-page">
     <header class="mall-header">
-      <div class="brand" @click="router.push('/user-mall')">WiseCart 用户商城</div>
-      <div class="header-actions">
+      <div class="brand" @click="router.push('/user-mall')">
+        <span class="brand-wise">Wise&nbsp;</span><span class="brand-cart">Cart&nbsp;</span><span class="brand-sub">商城&nbsp;</span>
+      </div>
+      <div class="header-spacer"></div>
+      <div class="header-search">
         <el-input
           v-model="searchKeyword"
           placeholder="搜索商品"
           class="search-input"
           clearable
           @keyup.enter="onSearch"
-        />
-        <el-button type="primary" @click="onSearch">搜索</el-button>
-        <el-button @click="router.push('/user-profile')">用户画像</el-button>
+        >
+          <template #append>
+            <el-button type="primary" @click="onSearch">搜索</el-button>
+          </template>
+        </el-input>
+      </div>
+      <div class="header-spacer"></div>
+      <div class="header-right">
+        <el-button plain @click="router.push('/user-profile')">用户画像</el-button>
+        <el-dropdown trigger="click" @command="onUserCommand">
+          <div class="avatar-wrap">
+            <div class="user-avatar">U</div>
+            <span class="user-name">用户</span>
+            <el-icon class="arrow-icon"><ArrowDown /></el-icon>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="profile">用户画像</el-dropdown-item>
+              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </header>
 
@@ -92,6 +114,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { ArrowDown } from "@element-plus/icons-vue";
 import { defineRouteMeta } from "@kesplus/kesplus";
 import { useUserMallData } from "@/composables/useUserMallData";
 
@@ -133,48 +156,137 @@ const filteredProducts = computed(() => {
 
 const onSearch = () => {};
 const categoryLabel = (key) => categoryLabels[key] || key;
+
+const onUserCommand = (cmd) => {
+  if (cmd === "profile") {
+    router.push("/user-profile");
+  } else if (cmd === "logout") {
+    localStorage.removeItem("loginRole");
+    localStorage.removeItem("userInfo");
+    window.location.assign(
+      `${window.location.origin}${window.location.pathname}#/login`
+    );
+  }
+};
 </script>
 
 <style scoped>
 .mall-page {
-  min-height: 100vh;
-  background: #f5f7fb;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #f8fafc 0%, #f0f4ff 100%);
   padding: 14px;
 }
 
 .mall-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 16px;
   background: #fff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
 }
 
 .brand {
-  font-size: 24px;
-  font-weight: 800;
+  display: flex;
+  align-items: baseline;
   cursor: pointer;
+  flex-shrink: 0;
+  gap: 0;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.brand-wise,
+.brand-cart,
+.brand-sub {
+  font-weight: 900;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-wise {
+  font-size: 26px;
+  font-style: italic;
+  background-image: linear-gradient(135deg, #ff6700, #ff9a44);
+}
+
+.brand-cart {
+  font-size: 26px;
+  font-style: italic;
+  background-image: linear-gradient(135deg, #6366f1, #a855f7);
+}
+
+.brand-sub {
+  font-size: 20px;
+  background-image: linear-gradient(135deg, #10b981, #06b6d4);
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.header-search {
+  flex: 0 1 420px;
 }
 
 .search-input {
-  width: 300px;
+  width: 100%;
+}
+
+.header-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.avatar-wrap:hover {
+  background: #f1f5f9;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6700, #ff9a44);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.arrow-icon {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .hero {
-  margin-top: 12px;
-  border-radius: 14px;
-  padding: 18px;
-  background: linear-gradient(120deg, #ff7a18, #ffb347);
+  margin-top: 14px;
+  border-radius: 16px;
+  padding: 28px 24px;
+  background: linear-gradient(120deg, #ff6700 0%, #ff9a44 40%, #ffcf4a 100%);
   color: #fff;
+  box-shadow: 0 8px 24px rgba(255, 103, 0, 0.2);
 }
 
 .hero-title {
@@ -185,58 +297,72 @@ const categoryLabel = (key) => categoryLabels[key] || key;
 .hero-subtitle {
   margin-top: 8px;
   opacity: 0.92;
+  font-size: 15px;
 }
 
 .section-card {
-  margin-top: 12px;
+  margin-top: 14px;
   background: #fff;
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
 }
 
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .section-head h3 {
   margin: 0;
+  font-size: 17px;
+  color: #1e293b;
 }
 
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .product-card {
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .cover {
-  height: 90px;
-  border-radius: 10px;
+  height: 96px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-weight: 700;
+  font-size: 14px;
 }
 
 .name {
-  margin-top: 8px;
+  margin-top: 10px;
   font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
 }
 
 .meta-line {
-  margin-top: 6px;
+  margin-top: 8px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   color: #64748b;
   font-size: 13px;
 }
@@ -244,35 +370,46 @@ const categoryLabel = (key) => categoryLabels[key] || key;
 .price {
   color: #ef4444;
   font-weight: 700;
+  font-size: 16px;
 }
 
 .guess-card {
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 10px;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.guess-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .guess-name {
   font-weight: 700;
+  color: #1e293b;
 }
 
 .guess-score {
   margin-top: 6px;
-  color: #334155;
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 13px;
 }
 
 .guess-reason {
   margin-top: 4px;
   color: #64748b;
+  font-size: 13px;
 }
 
 .toolbar {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .filter-item {
@@ -287,12 +424,17 @@ const categoryLabel = (key) => categoryLabels[key] || key;
 
 @media (max-width: 768px) {
   .mall-header {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
   }
 
-  .search-input {
-    width: 100%;
+  .header-spacer {
+    display: none;
+  }
+
+  .header-search {
+    flex: 1 1 100%;
+    order: 10;
+    margin-top: 8px;
   }
 
   .products-grid {

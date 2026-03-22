@@ -39,8 +39,8 @@
 
         <el-form-item>
           <el-radio-group v-model="loginRole" class="role-switch">
-            <el-radio-button label="admin">Admin</el-radio-button>
-            <el-radio-button label="user">User</el-radio-button>
+            <el-radio-button label="admin">管理员</el-radio-button>
+            <el-radio-button label="user">用户</el-radio-button>
           </el-radio-group>
         </el-form-item>
 

@@ -1,0 +1,20 @@
+create or replace function "user_center"."fun_user_list"(user_gender varchar) return JSON as
+/**
+ * @Description 
+ * @Param user_gender 
+ * @Return JSON
+ */
+declare 
+  v_result JSON;
+
+  execute_sql varchar;
+begin  
+  if kesplus_platform.utils.str_is_not_empty(user_gender) then
+     execute_sql:='select * from user_center.user_center_user where gender=:u_g';
+  else
+     execute_sql:='select * from user_center.user_center_user';
+  end IF;
+  execute kesplus_platform.json.array_sql(execute_sql) into v_result using user_gender;
+
+  return v_result;
+end;
