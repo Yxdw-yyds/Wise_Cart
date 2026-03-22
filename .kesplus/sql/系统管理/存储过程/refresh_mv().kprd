@@ -1,0 +1,18 @@
+create or replace procedure "kesplus_base"."refresh_mv"()  as
+/**
+ * @Description
+
+ *
+ */
+declare
+
+begin
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_userrole" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_urole" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_user_restful" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_policy" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_role" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_user_permission" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_restful" FORCE;
+    --REFRESH MATERIALIZED VIEW "kesplus_base"."kesplus_v_user_info" FORCE;
+end;

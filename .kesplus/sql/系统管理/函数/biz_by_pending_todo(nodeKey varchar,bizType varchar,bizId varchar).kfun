@@ -1,0 +1,21 @@
+create or replace function "kesplus_base"."biz_by_pending_todo"(nodeKey varchar,bizType varchar,bizId varchar) return boolean as
+/**
+ * @Description
+ * @Param nodeKey
+ * @Param bizType
+ * @Param bizId
+ * @Return JSON
+ */
+declare
+  v_user_id varchar;
+  v_dept_id varchar;
+begin
+  --当前用户id
+  v_user_id := kesplus_platform.user('userId');
+  v_dept_id := kesplus_platform.user('deptId');
+  PERFORM 1 FROM "kesplus_workflow"."kes_app_pending" kap
+  JOIN "kesplus_workflow"."kes_app_pending_assign" kapa ON kap."id" = kapa."pending_id" AND kapa."assignee_id" = v_user_id AND kapa."assignee_dept_id" = v_dept_id
+  JOIN "kesplus_workflow"."kes_bpmn_task" kbt ON kap."pending_key" = kbt."id" AND kbt."task_def_key" = nodeKey
+  WHERE kap."type" = bizType AND kap."business_id" = bizId;
+  return FOUND;
+end;

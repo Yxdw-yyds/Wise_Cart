@@ -1,0 +1,21 @@
+CREATE OR REPLACE PROCEDURE "kesplus_base"."refresh_auth"()  AS
+/**
+ * @Description
+
+ *
+ */
+DECLARE
+    v_init boolean;
+    v_app_id varchar;
+BEGIN
+    SELECT id INTO v_app_id FROM kesplus_platform."kes_application" ka;
+
+    IF NOT exists(select 1 from kesplus_base.kes_jobs j WHERE j."code"= 'kesplus_init' AND j."app_id" = v_app_id) THEN
+        CALL kesplus_platform.sys_auth.kesplus_init();
+
+        UPDATE kesplus_base.kes_jobs j SET j."app_id"  = v_app_id WHERE j."code" = 'kesplus_init';
+    ELSE
+        CALL kesplus_platform.sys_auth.kesplus_init(FALSE);
+    END IF;
+
+END;

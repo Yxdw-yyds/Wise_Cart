@@ -1,0 +1,433 @@
+CREATE OR REPLACE PACKAGE "kesplus_workflow"."pkg_kesplus_process_api" AUTHID CURRENT_USER AS
+    PROCEDURE log(v_request_id varchar,v_request_type varchar,v_request_name varchar,v_request_api_id varchar,v_request_method_id varchar ,v_flow_text TEXT) ;
+    
+	/**
+     * plsql-api
+	 * 流程执行操作
+	 * 提供给业务表单调用
+	 * @param formData 表单信息,包括流程信息
+	 * @param callbackProcedureName 业务表单回调函数完整名称
+	 */
+	PROCEDURE execute_process(formData jsonb, callbackProcedureName varchar);
+	
+	/**
+     * plsql-api
+     * "kesplus_workflow"."pkg_kesplus_process_api".operation_process_instance
+	 * @Description 流程操作
+	 * @param processInstanceId 流程实例id
+	 * @param op 流程操作 termination/invalid/activate/reBackFirst/suspend/recovery/pressTodo催办
+	 * termination 终止流程
+	 * invalid 作废流程
+	 * activate 激活
+	 * reBackFirst 撤销
+	 * suspend 挂起-挂起/恢复
+	 * recovery 恢复-挂起/恢复
+	 * pressTodo催办
+	 * @param reason 流程操作原因
+	 * RETURN 返回json
+	 */
+	FUNCTION operation_process_instance(v_process_instance_id varchar,v_op varchar,v_reason varchar) RETURN JSON;
+	/*
+	 * plsql-api
+	 * 根据task_id获取执行人相关信息
+	 * 提供给业务表单调用
+	 * @param v_task_id 任务id
+	 * */
+	FUNCTION get_his_assignee_by_task_id(v_task_id varchar) RETURNS jsonb;
+	/**
+	 * plsql-api
+     * 获取表单配置信息-表单配置
+     * v_process_instance_id 流程实例id
+     * v_current_element_def_key 节点id
+     */
+	FUNCTION get_current_config(v_process_instance_id varchar, v_current_element_def_key varchar) RETURNS JSONB;
+	  /**
+	 * plsql-api
+     * 通过节点标识获取当前节点信息(一个节点)
+     * @v_wf_process：流程定义
+     * @v_current_element_def_key：节点标识
+     * return 当前节点信息(一个节点)
+     */
+	FUNCTION get_current_element(v_process_instance_id varchar, v_current_element_def_key varchar) RETURNS JSONB;
+	
+	PROCEDURE flash_variable_text2(v_process_instance_id varchar,v_current_element_def_key varchar);
+	/*
+	 * plsql-api
+	 * 超时自动提交
+	 * */
+	PROCEDURE timeout_automatic_submit();
+	
+	/*
+	 * plsql-api
+	 * 自动发起流程
+	 * v_ref_process_instance_id 来源表单对应process_instance_id
+	 * v_to_form_code 当前发起表单formcode
+	 * v_to_form_procedure_name 当前发起表单对应函数存储过程
+	 * 
+	 * */
+	PROCEDURE automatic_flow_process_start(v_ref_process_instance_id varchar,v_to_form_code varchar,v_to_form_procedure_name varchar);
+	/*
+	 * plsql-api
+	 * 自动发起流程
+	 * v_request_user_id 当前发起人
+	 * v_form_code 当前发起表单formcode
+	 * v_form_add_procedure_name 当前发起表单对应函数存储过程
+	 * v_form 当前发起表单对应数据
+	 * */
+	PROCEDURE automatic_flow_process_start(v_request_user_id varchar,v_form_code varchar,v_form_add_procedure_name varchar,v_form jsonb);
+	
+	/*
+	 * plsql-api
+	 * 自动办理流程
+	 * v_process_instance_id 流程实例id
+	 * */
+	PROCEDURE automatic_flow_process_execute(v_process_instance_id varchar);
+	/**
+	 * plsql-api
+	 * 刷新流程发起人
+	 */
+	PROCEDURE flash_submit_user(v_process_instance_id varchar,v_user_id varchar);
+	/*
+	 * plsql-api
+	 * 根据process_instance_id发送通知
+	 * 提供给业务表单调用
+	 * @param v_process_instance_id 流程实例id
+	 * @param v_reason 通知意见
+	 * @param v_user_id 通知接收人
+	 * */
+	PROCEDURE notice_message(v_process_instance_id varchar, v_reason varchar,v_user_id varchar);
+	/**
+	 * plsql-api
+	 * 获取待办信息
+	 */
+	FUNCTION get_pending_todo(v_process_instance_id varchar,v_user_id varchar) RETURN JSON;
+	
+	/**
+	 * restful-api接口实现/kesplus_workflow/log/currentAndNext
+	 * 废弃
+	 * @Description 获取当前任务节点及下一任务节点
+	 * @param configId 配置id
+	 * @param processId 流程实例id
+	 * @param taskId varchar 流程任务id
+	 * RETURN 返回流程实例操作日志
+	 */
+	FUNCTION current_and_next_task(configId varchar,processId varchar, taskId varchar) RETURN JSON;
+	/**
+	 * restful-api接口实现/kesplus_workflow/deployment
+	 * @Description 流程模板部署
+	 * @param processKey 流程编号/流程标识
+	 * @param tenantId 租户id
+	 * RETURN 返回流程编号/流程定义id/租户
+	 */
+	FUNCTION deployment(processKey varchar, tenantId varchar) RETURN JSON;
+	/**
+	 * restful-api接口实现/kesplus_workflow/process/currentAndVariables
+	 * @Description 获取当前流程节点及流程变量
+	 * @param configId 配置id
+	 * @param processId 流程实例id
+	 * RETURN 返回当前流程节点及流程变量
+	 */
+	FUNCTION listVariablesByProcess(configId varchar,processId varchar) RETURN JSON;
+	
+	/**
+	 * restful-api接口实现/kesplus_workflow/task/currentAndVariables
+	 * @Description 获取当前任务节点及流程变量
+	 * @param taskId 流程任务id
+	 * RETURN 返回当前任务节点及流程变量
+	 */
+	FUNCTION listVariablesByTask(taskId varchar) RETURN JSON;
+	
+	/**
+	 * restful-api接口实现/kesplus_workflow/process/handlers
+	 * @Description 获取当前流程所有操作过的用户
+	 * @param processId 流程实例id
+	 * RETURN 获取当前流程所有操作过的用户
+	 */
+	FUNCTION listUsersByProcess(processId varchar) RETURN JSON ;
+	/**
+	 * restful-api接口实现/kesplus_workflo/mock/start
+	 * @Description 流程预启动
+	 * @param configId 流程配置id
+	 * @param processId 流程实例id
+	 * @param variables 流程变量/参数
+	 * RETURN 返回当前节点及后续节点相关信息
+	 */
+	FUNCTION mockStartProcess(configId varchar,processId varchar,variables JSON) RETURN JSON;
+	/**
+	 * restful-api接口实现/kesplus_workflow/mock/complete
+	 * @Description 流程预提交
+	 * @param taskId 流程任务id
+	 * @param variables 流程变量/参数
+	 * RETURN 返回当前节点及后续节点相关信息
+	 */
+	FUNCTION mockCompleteTask(taskId varchar, variables json) RETURN JSON;
+	  /**
+     * restful-api接口实现/kesplus_workflow/instance/op
+	 * @Description 流程操作
+	 * @param processInstanceId 流程实例id
+	 * @param op 流程操作
+	 * @param reason 流程操作原因
+	 * RETURN 返回json
+	 */
+	FUNCTION op_process_instance(processInstanceId varchar,op varchar,reason varchar) RETURN JSON;
+	
+	/**
+	 * restful-api接口实现/kesplus_workflow/task/op
+	 * @Description 任务操作
+	 * 主要两种情况
+	 * 撤回操作
+	 * 已阅操作
+	 * @param taskOpId 审批人审批操作记录id
+	 * @param op 流程操作
+	 * @param reason 流程操作原因
+	 * @return json
+	 */
+	FUNCTION op_task(taskOpId varchar,op varchar,reason varchar) RETURN JSON;
+	/**
+	 * restful-api接口实现/kesplus_workflow/task/todo/batch_op
+	 * @Description 待办任务_节点操作
+	 * @param jsonData 上下文信息
+	 * @return json
+	 */
+	FUNCTION op_todo_task(jsonData text) RETURN JSON ;
+	/**
+	 * restful-api接口实现/kesplus_workflow/task/todo/op
+	 * @Description 待办任务_节点批量操作
+	 * 主要三种情况
+	 * 批量办理
+	 * 批量退回上一步
+	 * 批量退回申请人
+	 * @param jsonData 上下文信息
+	 * @return json
+	 */
+	FUNCTION batch_op_todo_task(jsonData text) RETURN JSON ;
+	
+	
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/add
+	* @Description 模板定义_新增
+	* @param text jsonData 实体参数
+	* @return json 模板定义数据
+	*/
+    FUNCTION add_modeler(jsonData text) RETURN JSON;
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/del
+	* @Description 模板定义_删除
+	* @param varchar ids 模板定义多个id
+	* @return boolean 操作结果
+	*/
+    FUNCTION del_modelers(ids varchar) RETURN boolean;
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/update
+	* @Description 模板定义_更新
+	* @param text jsonData 实体参数
+	* @return json 模板定义数据
+	*/
+    FUNCTION update_modeler(jsonData text) RETURN JSON;
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/detail
+	* @Description 模板定义_详情
+	* @param text 模板定义id 
+	* @return json 模板定义数据
+	*/
+    FUNCTION get_modeler_by_id(id_ varchar) RETURN JSON;
+	
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/content
+	* @Description 模板定义_根据流程标识查询内容
+	* @param 流程标识
+	* @return 模板定义内容
+	*/
+    FUNCTION get_xml_content(processKey varchar) RETURN varchar;
+    
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/disable
+	* @Description 模板定义_启用或挂起
+	* @param id_ 模板定义id 
+	* @param enabled 启用或挂起标志
+	* @return boolean 操作结果
+	*/
+    FUNCTION disabled_modeler(id_ varchar, enabled int) RETURN boolean;
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/page
+	* @Description 模板定义_分页查询
+	* @param text jsonData 查询条件
+	* @return JSON 分页查询列表
+	*/
+    FUNCTION page_modeler(jsonData text) RETURN JSON;
+    
+    /**
+	* restful-api接口实现/kesplus_workflow/modeler/simple/page
+	* @Description 模板定义_分页查询
+	* @param text jsonData 查询条件
+	* @return JSON 分页查询列表
+	*/
+    FUNCTION page_simple_modeler(jsonData text) RETURN JSON;
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/list/config
+	@Description 模板定义_获取流程配置
+	* @param formCode 表单编号
+	* @return json 流程配置
+	*/
+    FUNCTION list_config_by_form(formCode varchar) RETURN JSON;
+	
+     /**
+      * restful-api接口实现/kesplus_workflow/modeler/page/process_form_config
+	  @Description 模板定义_获取可发起流程的流程配置列表(流程已启用/已发布/已配置表单)
+	* @param jsonData 
+	* @return json 可发起流程的流程配置列表
+	*/
+    FUNCTION page_process_form_config(jsonData text) RETURN JSON;
+	
+    /**
+	 * restful-api接口实现/kesplus_workflow/modeler/variables	
+	 * @Description 模板定义_获取公共流程参数
+	 * @return json 公共流程参数
+	 */
+    FUNCTION list_process_variables() RETURN JSON;
+    /**
+	 * restful-api接口实现/kesplus_workflow/modeler/buttons
+	 * @Description 模板定义_获取流程按钮
+	 * @return json 流程按钮
+	 */
+    FUNCTION list_process_buttons() RETURN JSON;
+	
+	
+     /**
+	 * restful-api接口实现/kesplus_workflow/modeler/version/detail
+	 * @Description 模板定义版本_详情
+	 * @param processKey 流程标识
+	 * @param processVersion 流程版本
+	 * @return json流程模板详情
+	 */
+    FUNCTION get_modeler_by_version(processKey varchar, processVersion int) RETURN JSON;
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/version/del
+	* @Description 模板定义版本_删除
+	* @param varchar ids 模板定义版本多个id
+	* @return boolean 操作结果
+	*/
+    FUNCTION del_modeler_versions(ids varchar) RETURN boolean;
+	
+	/**
+	* restful-api接口实现/kesplus_workflow/modeler/version/page
+	* @Description 模板定义版本_分页
+	* @param text jsonData 查询条件
+	* @return JSON 分页查询列表
+	*/
+    FUNCTION page_modeler_versions(jsonData text) RETURN JSON;
+    /**
+	 * restful-api接口实现/kesplus_workflow/modeler/version/active
+	 * @Description 模板定义版本_激活
+	 * @param id 模板定义版本id
+	 * @return boolean 操作结果
+	 */
+    FUNCTION active_modeler_versions(id varchar) RETURN boolean;
+   
+    /**
+	 * restful-api接口实现/kesplus_workflow/modeler/version/get_process_modeler_and_form_config
+	 * @Description 模板定义版本_获取流程信息及表单配置信息
+	 * @param id 模板定义版本id
+	 * @return boolean 操作结果
+	 */
+    FUNCTION get_process_modeler_and_form_config(id varchar) RETURN JSON;
+    
+    /**
+	 * restful-api接口实现/kesplus_workflow/modeler/version/change_process_modeler_and_form_config
+	 * @Description 模板定义版本_修改流程信息及表单配置信息
+	 * @param id 模板定义版本id
+	 * @return boolean 操作结果
+	 */
+    FUNCTION change_process_modeler_and_form_config(jsonData text) RETURN boolean;
+    
+    /**
+	 * restful-api接口实现/kesplus_workflow/instance/detail
+	 * @Description 获取流程详细定义信息(返回base64的xml数据)
+	 * 优先通过processInstanceId流程实例id获取当前实例的详细定义信息(返回base64的xml数据)
+	 * 最低通过processDefId流程定义id获取当前实例的详细定义信息(返回base64的xml数据)
+	 * @param processInstanceId 流程实例id
+	 * @param processDefId 流程定义id
+	 * RETURN 返回base64的xml数据
+	 */
+	FUNCTION get_process_bpmn(processInstanceId varchar, processDefId varchar,formCode varchar :='')RETURN TEXT;
+	/**
+	 * restful-api接口实现/kesplus_workflow/instance/log
+	 * @Description 获取流程操作记录
+	 * @param processInstanceId 流程实例id
+	 * RETURN 返回流程操作记录
+	 */
+	FUNCTION get_process_detail(processInstanceId varchar,formCode varchar :='')RETURN JSON;
+	FUNCTION page_by_ops(jsonData TEXT) RETURN JSON ;
+	FUNCTION page_pending_todo_by_ops(jsonData TEXT) RETURN JSON ;
+	/**
+     * restful-api接口实现/kesplus_workflow/starter/page
+	 * @Description 分页查询我发起的流程列表
+	 * @param jsonData : 查询条件
+	 * RETURN 返回我发起的流程列表表
+	 */
+	FUNCTION page_by_starter(jsonData TEXT) RETURN JSON;
+	/**
+	 * restful-api接口实现/kesplus_workflow/log/flows
+	 * @Description 流程图
+	 * @param processInstanceId : 查询条件
+	 * RETURN 流程图
+	 */
+	FUNCTION get_process_instance_flows(processInstanceId varchar) RETURN jsonb;
+	/**
+     * restful-api接口实现/kesplus_workflow/pending/current/todo/page
+	 * @Description 分页查询待办任务列表
+	 * @param jsonData : 查询条件
+	 * RETURN 返回待办任务列表
+	 */
+	FUNCTION page_pending_todo(jsonData TEXT) RETURN JSON;
+	/**
+	 * restful-api接口实现/kesplus_workflow/pending/current/done/page
+	 * @Description 分页查询已办任务列表
+	 * @param jsonData : 查询条件
+	 * RETURN 返回已办任务列表
+	 */
+	FUNCTION page_pending_done(jsonData TEXT) RETURN JSON;
+	
+	/**
+	 * restful-api接口实现	/kesplus_workflow/pending/detail
+	 * @Description 查询办理详情
+	 * @param id : 查询条件id
+	 * @param taskOpId taskOpId
+	 * @param pendingType pendingType
+	 * RETURN 返回办理详情
+	 */
+	FUNCTION get_pending_by_id(id varchar,taskOpId varchar,pendingType varchar) RETURN JSON;
+	/**
+	 * restful-api接口实现	/kesplus_workflow/pending/one
+	 * @Description 查询办理已办详情
+	 * @param processInstanceId : 查询条件processInstanceId
+	 * @param userId userId
+	 * RETURN 返回查询办理已办详情
+	 */
+	FUNCTION get_pending_by_business_id(businessId varchar,userId varchar) RETURN JSON ;
+	
+	/**
+	 * restful-api接口实现	/kesplus_workflow/pending/statistics
+	 * @Description 查询统一待办统计数据
+	 * RETURN 返回查询统一待办统计数据
+	 */
+	FUNCTION get_statistics_with_pending() RETURN JSON;
+	
+	FUNCTION add_setting_delegation(jsonData text) RETURN JSON;
+	FUNCTION del_setting_delegations(jsonData text) RETURN boolean ;
+	FUNCTION update_setting_delegation(jsonData text) RETURN JSON;
+	FUNCTION page_setting_delegation(jsonData TEXT) RETURN JSON;
+	FUNCTION get_setting_delegation_by_id(id_ varchar) RETURN JSON;
+	
+	FUNCTION add_setting_comment(jsonData text) RETURN JSON;
+	FUNCTION get_setting_comment(commentType varchar,processKey varchar) RETURN JSON;
+	
+	/**
+	 * restful-api接口实现/kesplus_workflow/log/add_log
+	 * 写日志
+	 * @Description 写日志
+	 * @param jsonData 日志内容
+	 * RETURN 
+	 */
+	FUNCTION add_log(jsonData text) RETURN JSON;
+END;
