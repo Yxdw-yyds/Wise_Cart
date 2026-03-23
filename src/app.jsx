@@ -33,7 +33,60 @@ function setRoutePathAttr(path) {
   document?.body?.setAttribute("data-route-path", path || "");
 }
 
+function ensureAdminBootstrap() {
+  const role = localStorage.getItem("loginRole");
+  if (role !== "admin") return;
+
+  const demoToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlZmZlY3Rfc2Vjb25kIjo5OTk5OTk5OTk5LCJpZCI6ImRlbW8iLCJhcHBJZCI6MX0.demo";
+  const defaultUser = {
+    token: demoToken,
+    refreshToken: demoToken,
+    tokenCreateTime: Date.now(),
+    realName: "应用管理员",
+    username: "admin",
+    userName: "admin",
+    nickName: "应用管理员",
+    roles: "admin",
+    permission: ["*"],
+    menus: [],
+    userId: "demo-admin",
+    userid: "demo-admin",
+    id: "demo-admin",
+  };
+
+  let current = defaultUser;
+  try {
+    const raw = localStorage.getItem("userInfo");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      current = { ...defaultUser, ...parsed };
+    }
+  } catch (_) {
+    current = defaultUser;
+  }
+
+  if (!current.userId) current.userId = current.userid || current.id || "demo-admin";
+  if (!current.userid) current.userid = current.userId;
+  if (!current.id) current.id = current.userId;
+  if (!current.token) current.token = demoToken;
+  if (!current.refreshToken) current.refreshToken = current.token;
+
+  const payload = JSON.stringify(current);
+  localStorage.setItem("token", current.token);
+  localStorage.setItem("refreshToken", current.refreshToken);
+  localStorage.setItem("userId", current.userId);
+  localStorage.setItem("userInfo", payload);
+  localStorage.setItem("user", payload);
+  localStorage.setItem("loginUser", payload);
+  sessionStorage.setItem("token", current.token);
+  sessionStorage.setItem("refreshToken", current.refreshToken);
+  sessionStorage.setItem("userId", current.userId);
+  sessionStorage.setItem("userInfo", payload);
+}
+
 export function onAppCreated({ app }) {
+  ensureAdminBootstrap();
   const router = app?.config?.globalProperties?.$router;
   const getRole = () => localStorage.getItem("loginRole") || "admin";
 

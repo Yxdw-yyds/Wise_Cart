@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="analysis-page-wrap">
+  <div class="analysis-page-wrap route-fade-in">
     <UserBehaviorAnalysis />
   </div>
 </template>

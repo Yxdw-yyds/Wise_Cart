@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="ops-page-wrap">
+  <div class="ops-page-wrap route-fade-in">
     <el-card shadow="never" class="ops-head-card">
       <div class="ops-title">运营决策（CCDRec真实数据）</div>
       <div class="ops-subtitle">由 baby.inter + TopK 离线聚合驱动，不再使用 mock。</div>

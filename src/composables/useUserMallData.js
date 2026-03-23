@@ -36,8 +36,8 @@ function createProducts() {
     ["东北香米 10kg", "food", 99, "米面粮油馆", 71],
     ["黑椒牛肉意面 6盒", "food", 79, "速食优选", 76],
     ["有机燕麦片 1kg", "food", 36, "轻食优选", 74],
-    ["玻尿酸补水面膜 20片", "beauty", 129, "妆品直供", 83],
-    ["维C焕亮精华 30ml", "beauty", 219, "妆品直供", 78],
+    ["玻尿酸补水面膜 20片", "beauty", 129, "美妆直营", 83],
+    ["VC焕亮精华 30ml", "beauty", 219, "美妆直营", 78],
     ["氨基酸洁面乳 200ml", "beauty", 89, "个护生活", 72],
     ["降噪蓝牙耳机", "digital", 299, "数码官方店", 84],
     ["便携电动牙刷", "digital", 169, "数码官方店", 69],
@@ -58,6 +58,7 @@ function createProducts() {
       hotScore,
       ctr: Number((5 + ((idx * 1.13) % 8)).toFixed(1)),
       online: idx % 11 !== 0,
+      categoryHint: `${CATEGORY_LABELS[category]} · ${shop}`,
       imgBg: `linear-gradient(135deg, hsl(${(idx * 27) % 360}, 85%, 78%), hsl(${(idx * 27 + 45) % 360}, 88%, 68%))`,
     };
   });
@@ -107,27 +108,34 @@ export function buildUserInterestVector(behaviorLog) {
 }
 
 export function buildGuessLike(products, interestVector, activeCategory = "all") {
-  const candidates = products
+  return products
     .filter((p) => p.online)
     .filter((p) => activeCategory === "all" || p.category === activeCategory)
     .map((p) => {
       const interest = interestVector[p.category] || 1;
       const score = Number((interest * 10 + p.hotScore * 0.6 + p.ctr * 1.8).toFixed(2));
-      let reason = "全站热度较高";
-      if (interest >= 8) reason = `最近高频关注${CATEGORY_LABELS[p.category]}`;
-      else if (interest >= 5) reason = `相似偏好用户在${CATEGORY_LABELS[p.category]}点击更高`;
+      let reason = "全站热度较高，适合作为回退推荐";
+      let reasonTag = "热度回补";
+
+      if (interest >= 8) {
+        reason = `你最近对${CATEGORY_LABELS[p.category]}浏览和购买更频繁`;
+        reasonTag = "高频偏好";
+      } else if (interest >= 5) {
+        reason = `相似偏好用户在${CATEGORY_LABELS[p.category]}上的点击更高`;
+        reasonTag = "相似人群";
+      }
+
       return {
         productId: p.id,
         name: p.name,
         score,
         reason,
+        reasonTag,
         category: p.category,
         price: p.price,
       };
     })
     .sort((a, b) => b.score - a.score);
-
-  return candidates;
 }
 
 export function buildTop50(products, interestVector, globalWeight = 0.45, interestWeight = 0.55) {
@@ -136,9 +144,9 @@ export function buildTop50(products, interestVector, globalWeight = 0.45, intere
     const p = products[i % products.length];
     const interestScore = Number(((interestVector[p.category] || 1) * 10 + ((i * 0.7) % 6)).toFixed(2));
     const blended = interestScore * interestWeight + p.hotScore * globalWeight;
-    let reason = "兴趣分+热度分综合推荐";
+    let reason = "兴趣分与热度分综合推荐";
     if (interestScore > 75) reason = `你对${CATEGORY_LABELS[p.category]}兴趣较强`;
-    if (p.ctr > 10) reason = `${reason}，且点击率高`;
+    if (p.ctr > 10) reason = `${reason}，且点击率较高`;
 
     ranked.push({
       rank: i + 1,
@@ -168,7 +176,7 @@ function buildUserProfile(interestVector) {
   const tags = ["高活跃", "价格敏感", "新品偏好", "晚间浏览"];
   if (categoryPercents.digital > 16) tags.push("数码偏好");
   if (categoryPercents.beauty > 16) tags.push("美妆偏好");
-  const summary = `当前最感兴趣类目为${topCategory}，其次是${secondCategory}，推荐优先展示高性价比和高点击商品。`;
+  const summary = `当前最感兴趣类目为${topCategory}，其次是${secondCategory}，推荐侧会优先展示高性价比与高点击商品。`;
   return { categoryPercents, tags, summary };
 }
 
@@ -182,18 +190,14 @@ export function useUserMallData() {
   const guessPage = ref(0);
 
   const interestVector = computed(() => buildUserInterestVector(behaviorLog.value));
-  const guessAll = computed(() =>
-    buildGuessLike(products.value, interestVector.value, activeCategory.value)
-  );
+  const guessAll = computed(() => buildGuessLike(products.value, interestVector.value, activeCategory.value));
 
   const guessLikeList = computed(() => {
     const pageSize = 6;
     const start = (guessPage.value % 3) * pageSize;
     const pool = guessAll.value;
     if (!pool.length) return [];
-    return pool.slice(start, start + pageSize).length
-      ? pool.slice(start, start + pageSize)
-      : pool.slice(0, pageSize);
+    return pool.slice(start, start + pageSize).length ? pool.slice(start, start + pageSize) : pool.slice(0, pageSize);
   });
 
   const top50Raw = computed(() => buildTop50(products.value, interestVector.value));

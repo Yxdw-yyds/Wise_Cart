@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="model-page-wrap">
+  <div class="model-page-wrap route-fade-in">
     <RecommendationModelCenter />
   </div>
 </template>

@@ -1,131 +1,69 @@
 <template>
-  <div class="profile-page">
+  <div class="profile-page route-scroll-page route-fade-in">
     <header class="profile-header">
       <div class="header-inner">
         <div class="brand" @click="router.push('/user-mall')">WiseCart</div>
-        <h1 class="header-title">用户画像</h1>
+        <div class="header-copy">
+          <h1 class="header-title">用户画像</h1>
+          <p class="header-subtitle">兴趣分布、用户标签与最近行为轨迹</p>
+        </div>
         <el-button round @click="router.push('/user-mall')">返回商城</el-button>
       </div>
     </header>
 
     <div class="profile-body">
-      <!-- 左侧：连体人像彩色分区 -->
-      <div class="persona-col">
-        <el-card shadow="never" class="persona-card">
-          <div class="persona-card-title">兴趣画像</div>
-          <div class="persona-wrapper">
-            <!-- 连体人像 SVG：各部位直接相连，无间隙 -->
-            <svg class="body-svg" viewBox="0 0 260 520" xmlns="http://www.w3.org/2000/svg">
-              <!-- 头部 - 数码电器 -->
-              <ellipse cx="130" cy="52" rx="38" ry="42" :fill="catColors.digital" opacity="0.88" />
-
-              <!-- 躯干（含肩膀，与头/臂/腿衔接） - 个护美妆 -->
-              <path d="
-                M92,88
-                Q80,90 60,100 L40,108
-                L40,115 Q42,118 50,118
-                L68,112 L68,240
-                L90,250 L130,256 L170,250 L192,240
-                L192,112 L210,118
-                Q218,118 220,115 L220,108
-                L200,100 Q180,90 168,88
-                Z
-              " :fill="catColors.beauty" opacity="0.88" />
-
-              <!-- 左臂 - 饮料酒水 -->
-              <path d="
-                M40,115
-                Q32,120 24,150
-                L16,200 Q12,218 18,224
-                Q26,232 32,222
-                L42,180 L54,140
-                L68,118 L68,112
-                L50,118 Q42,118 40,115
-                Z
-              " :fill="catColors.drink" opacity="0.88" />
-
-              <!-- 右臂 - 休闲零食 -->
-              <path d="
-                M220,115
-                Q228,120 236,150
-                L244,200 Q248,218 242,224
-                Q234,232 228,222
-                L218,180 L206,140
-                L192,118 L192,112
-                L210,118 Q218,118 220,115
-                Z
-              " :fill="catColors.snack" opacity="0.88" />
-
-              <!-- 左腿 - 日化家清 -->
-              <path d="
-                M90,250 L130,256
-                L128,260 L118,380
-                Q116,420 112,460
-                Q110,485 100,490
-                Q88,494 86,484
-                L80,400 Q76,340 74,280
-                L68,240 Z
-              " :fill="catColors.daily" opacity="0.88" />
-
-              <!-- 右腿 - 粮油速食 -->
-              <path d="
-                M170,250 L130,256
-                L132,260 L142,380
-                Q144,420 148,460
-                Q150,485 160,490
-                Q172,494 174,484
-                L180,400 Q184,340 186,280
-                L192,240 Z
-              " :fill="catColors.food" opacity="0.88" />
-            </svg>
-
-            <!-- 百分比标注（直接在人像对应部位上） -->
-            <div class="pct-label pct-head">
-              <span class="pct-num">{{ pct('digital') }}%</span>
-              <span class="pct-name">数码电器</span>
+      <div class="summary-grid">
+        <el-card shadow="never" class="hero-card">
+          <div class="hero-kicker">User Persona Snapshot</div>
+          <div class="hero-main">
+            <div>
+              <div class="hero-title">当前偏好聚焦 {{ percentItems[0]?.label || "-" }}</div>
+              <p class="hero-text">{{ userProfile.summary }}</p>
             </div>
-            <div class="pct-label pct-torso">
-              <span class="pct-num">{{ pct('beauty') }}%</span>
-              <span class="pct-name">个护美妆</span>
-            </div>
-            <div class="pct-label pct-larm">
-              <span class="pct-num">{{ pct('drink') }}%</span>
-              <span class="pct-name">饮料酒水</span>
-            </div>
-            <div class="pct-label pct-rarm">
-              <span class="pct-num">{{ pct('snack') }}%</span>
-              <span class="pct-name">休闲零食</span>
-            </div>
-            <div class="pct-label pct-lleg">
-              <span class="pct-num">{{ pct('daily') }}%</span>
-              <span class="pct-name">日化家清</span>
-            </div>
-            <div class="pct-label pct-rleg">
-              <span class="pct-num">{{ pct('food') }}%</span>
-              <span class="pct-name">粮油速食</span>
-            </div>
-          </div>
-
-          <!-- 图例 -->
-          <div class="legend">
-            <div v-for="item in percentItems" :key="item.key" class="legend-item">
-              <span class="legend-dot" :style="{ background: catColors[item.key] }"></span>
-              <span class="legend-name">{{ item.label }}</span>
-              <b class="legend-pct">{{ item.percent }}%</b>
+            <div class="hero-tags">
+              <span v-for="tag in userProfile.tags" :key="tag" class="user-tag">{{ tag }}</span>
             </div>
           </div>
         </el-card>
+
+        <el-card shadow="never" class="metric-mini-card">
+          <div class="mini-label">主偏好类目</div>
+          <div class="mini-value">{{ percentItems[0]?.label || "-" }}</div>
+          <div class="mini-sub">{{ percentItems[0]?.percent || 0 }}%</div>
+        </el-card>
+
+        <el-card shadow="never" class="metric-mini-card">
+          <div class="mini-label">次偏好类目</div>
+          <div class="mini-value">{{ percentItems[1]?.label || "-" }}</div>
+          <div class="mini-sub">{{ percentItems[1]?.percent || 0 }}%</div>
+        </el-card>
       </div>
 
-      <!-- 右侧：进度条 + 标签 + 总结 -->
-      <div class="detail-col">
-        <el-card shadow="never" class="detail-card">
-          <div class="detail-card-title">类目兴趣分布</div>
+      <div class="content-grid">
+        <el-card shadow="never" class="panel-card radar-card">
+          <template #header>
+            <div class="panel-head">
+              <span>兴趣雷达图</span>
+              <span class="panel-note">ECharts 动态展示</span>
+            </div>
+          </template>
+          <div ref="radarRef" class="radar-chart"></div>
+        </el-card>
+
+        <el-card shadow="never" class="panel-card">
+          <template #header>
+            <div class="panel-head">
+              <span>兴趣分布</span>
+              <span class="panel-note">按类目排序</span>
+            </div>
+          </template>
           <div class="progress-list">
             <div v-for="item in percentItems" :key="item.key" class="progress-item">
               <div class="row-head">
-                <span class="cat-dot" :style="{ background: catColors[item.key] }"></span>
-                <span class="cat-name">{{ item.label }}</span>
+                <div class="row-left">
+                  <span class="cat-dot" :style="{ background: catColors[item.key] }"></span>
+                  <span class="cat-name">{{ item.label }}</span>
+                </div>
                 <b class="cat-pct">{{ item.percent }}%</b>
               </div>
               <div class="bar-track">
@@ -135,16 +73,27 @@
           </div>
         </el-card>
 
-        <el-card shadow="never" class="detail-card">
-          <div class="detail-card-title">用户标签</div>
-          <div class="tags-wrap">
-            <span v-for="tag in userProfile.tags" :key="tag" class="user-tag">{{ tag }}</span>
-          </div>
-        </el-card>
-
-        <el-card shadow="never" class="detail-card summary-card">
-          <div class="detail-card-title">画像总结</div>
-          <p class="summary-text">{{ userProfile.summary }}</p>
+        <el-card shadow="never" class="panel-card timeline-card">
+          <template #header>
+            <div class="panel-head">
+              <span>行为时间线</span>
+              <span class="panel-note">最近浏览 / 收藏 / 加购 / 购买</span>
+            </div>
+          </template>
+          <el-timeline>
+            <el-timeline-item
+              v-for="item in timelineItems"
+              :key="`${item.productId}-${item.ts}`"
+              :timestamp="item.timeText"
+              :type="item.timelineType"
+              placement="top"
+            >
+              <div class="timeline-content">
+                <div class="timeline-title">{{ item.actionText }} {{ item.productName }}</div>
+                <div class="timeline-meta">{{ item.categoryName }} · {{ item.detail }}</div>
+              </div>
+            </el-timeline-item>
+          </el-timeline>
         </el-card>
       </div>
     </div>
@@ -152,8 +101,10 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import dayjs from "dayjs";
+import * as echarts from "echarts";
 import { defineRouteMeta } from "@kesplus/kesplus";
 import { useUserMallData } from "@/composables/useUserMallData";
 
@@ -169,10 +120,13 @@ defineRouteMeta({
 });
 
 const router = useRouter();
-const { userProfile, categoryLabels } = useUserMallData();
+const radarRef = ref(null);
+let radarChart;
+
+const { userProfile, categoryLabels, behaviorLog, products } = useUserMallData();
 
 const catColors = {
-  digital: "#6366f1",
+  digital: "#4f46e5",
   beauty: "#ec4899",
   drink: "#0ea5e9",
   snack: "#f59e0b",
@@ -180,13 +134,100 @@ const catColors = {
   food: "#f97316",
 };
 
-const pct = (key) => userProfile.value.categoryPercents[key] ?? 0;
-
 const percentItems = computed(() =>
   Object.entries(userProfile.value.categoryPercents)
     .map(([key, percent]) => ({ key, label: categoryLabels[key] || key, percent }))
     .sort((a, b) => b.percent - a.percent)
 );
+
+const productMap = computed(() => Object.fromEntries(products.value.map((item) => [item.id, item])));
+
+const actionLabelMap = {
+  view: "浏览了",
+  fav: "收藏了",
+  cart: "加入购物车",
+  buy: "购买了",
+};
+
+const actionTypeMap = {
+  view: "info",
+  fav: "warning",
+  cart: "primary",
+  buy: "success",
+};
+
+const timelineItems = computed(() =>
+  [...behaviorLog.value]
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, 8)
+    .map((event) => {
+      const product = productMap.value[event.productId];
+      return {
+        ...event,
+        productName: product?.name || `商品 ${event.productId}`,
+        categoryName: categoryLabels[event.category] || event.category,
+        actionText: actionLabelMap[event.action] || "触发了",
+        timelineType: actionTypeMap[event.action] || "info",
+        detail: `${product?.shop || "推荐场景"} · ${dayjs(event.ts).format("MM-DD HH:mm")}`,
+        timeText: dayjs(event.ts).format("YYYY-MM-DD HH:mm"),
+      };
+    })
+);
+
+const renderRadar = () => {
+  if (!radarChart || !percentItems.value.length) return;
+  radarChart.setOption({
+    color: ["#295bff"],
+    tooltip: { trigger: "item" },
+    radar: {
+      radius: "62%",
+      axisName: { color: "#334155" },
+      splitArea: {
+        areaStyle: {
+          color: ["rgba(79, 124, 255, 0.02)", "rgba(79, 124, 255, 0.05)"],
+        },
+      },
+      splitLine: {
+        lineStyle: { color: "rgba(148, 163, 184, 0.28)" },
+      },
+      indicator: percentItems.value.map((item) => ({
+        name: item.label,
+        max: 40,
+      })),
+    },
+    series: [
+      {
+        type: "radar",
+        symbol: "circle",
+        symbolSize: 8,
+        areaStyle: { color: "rgba(41, 91, 255, 0.18)" },
+        lineStyle: { width: 3 },
+        data: [
+          {
+            value: percentItems.value.map((item) => item.percent),
+            name: "兴趣分布",
+          },
+        ],
+      },
+    ],
+  });
+};
+
+const resize = () => {
+  radarChart?.resize();
+};
+
+onMounted(async () => {
+  await nextTick();
+  radarChart = radarRef.value ? echarts.init(radarRef.value) : null;
+  renderRadar();
+  window.addEventListener("resize", resize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", resize);
+  radarChart?.dispose();
+});
 </script>
 
 <style scoped>
@@ -194,154 +235,197 @@ const percentItems = computed(() =>
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  background: linear-gradient(135deg, #f0f4ff 0%, #fdf2f8 50%, #f0fdf4 100%);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(circle at top left, rgba(255, 196, 141, 0.25), transparent 28%),
+    radial-gradient(circle at top right, rgba(79, 124, 255, 0.16), transparent 26%),
+    linear-gradient(135deg, #f7faff 0%, #fff7fb 55%, #f4fff8 100%);
 }
 
 .profile-header {
-  background: #fff;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .header-inner {
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 12px 20px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+}
+
+.header-copy {
+  flex: 1;
 }
 
 .brand {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 900;
   color: #ff6700;
   cursor: pointer;
 }
 
 .header-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
   margin: 0;
-}
-
-.profile-body {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 0 20px 40px;
-  display: grid;
-  grid-template-columns: 440px 1fr;
-  gap: 20px;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .profile-body {
-    grid-template-columns: 1fr;
-  }
-}
-
-.persona-card {
-  border-radius: 16px;
-}
-
-.persona-card-title,
-.detail-card-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 16px;
 }
 
-.persona-wrapper {
-  position: relative;
-  width: 300px;
-  margin: 0 auto;
-  aspect-ratio: 260 / 520;
-}
-
-.body-svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.12));
-}
-
-/* 百分比标注 - 直接覆盖在人像上 */
-.pct-label {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.pct-num {
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.5),
-    0 0 6px rgba(0, 0, 0, 0.2);
-}
-
-.pct-name {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  font-weight: 600;
-  margin-top: 1px;
-}
-
-.pct-head  { top: 6%;  left: 50%; transform: translateX(-50%); }
-.pct-torso { top: 32%; left: 50%; transform: translateX(-50%); }
-.pct-larm  { top: 30%; left: 6%; }
-.pct-rarm  { top: 30%; right: 6%; align-items: flex-end; }
-.pct-lleg  { top: 64%; left: 24%; }
-.pct-rleg  { top: 64%; right: 24%; align-items: flex-end; }
-
-/* 图例 */
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-top: 20px;
-  justify-content: center;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.header-subtitle {
+  margin: 4px 0 0;
+  color: #64748b;
   font-size: 13px;
 }
 
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.profile-body {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px 20px 40px;
 }
 
-.legend-name { color: #475569; }
-.legend-pct  { color: #1e293b; }
-
-/* 右侧 */
-.detail-col {
-  display: flex;
-  flex-direction: column;
+.summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(220px, 1fr));
   gap: 16px;
 }
 
-.detail-card { border-radius: 16px; }
+.hero-card {
+  overflow: hidden;
+  background: linear-gradient(120deg, rgba(255, 122, 24, 0.12), rgba(255, 255, 255, 0.9), rgba(41, 91, 255, 0.08));
+}
 
-.progress-list { display: grid; gap: 14px; }
+.hero-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.hero-main {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.hero-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.hero-text {
+  margin: 10px 0 0;
+  max-width: 560px;
+  line-height: 1.7;
+  color: #475569;
+}
+
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.metric-mini-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 148px;
+}
+
+.mini-label {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.mini-value {
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.mini-sub {
+  margin-top: 8px;
+  color: #295bff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.content-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.panel-card {
+  border-radius: 20px;
+}
+
+.radar-card {
+  grid-row: span 2;
+}
+
+.timeline-card {
+  grid-column: 1 / -1;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 700;
+}
+
+.panel-note {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.radar-chart {
+  height: 420px;
+}
+
+.progress-list {
+  display: grid;
+  gap: 14px;
+}
+
+.progress-item {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(248, 250, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
 
 .row-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.row-left {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
 }
 
 .cat-dot {
@@ -351,46 +435,86 @@ const percentItems = computed(() =>
   flex-shrink: 0;
 }
 
-.cat-name { flex: 1; font-size: 14px; color: #334155; }
-.cat-pct  { font-size: 15px; color: #1e293b; }
+.cat-name {
+  font-size: 14px;
+  color: #334155;
+}
+
+.cat-pct {
+  font-size: 15px;
+  color: #0f172a;
+}
 
 .bar-track {
   height: 12px;
-  border-radius: 6px;
-  background: #f1f5f9;
+  border-radius: 999px;
+  background: #eef2f7;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 6px;
+  border-radius: 999px;
   transition: width 0.6s ease;
-}
-
-.tags-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .user-tag {
   display: inline-block;
-  padding: 5px 14px;
-  border-radius: 20px;
+  padding: 6px 14px;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: 500;
-  color: #6366f1;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
+  font-weight: 600;
+  color: #295bff;
+  background: rgba(41, 91, 255, 0.1);
+  border: 1px solid rgba(41, 91, 255, 0.16);
 }
 
-.summary-card .summary-text {
-  margin: 0;
-  padding: 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #f0f4ff, #fdf2f8);
-  line-height: 1.7;
-  color: #334155;
+.timeline-content {
+  padding: 4px 0 10px;
+}
+
+.timeline-title {
   font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.timeline-meta {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+@media (max-width: 1200px) {
+  .summary-grid,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .radar-card,
+  .timeline-card {
+    grid-row: auto;
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner,
+  .hero-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-tags {
+    justify-content: flex-start;
+  }
+
+  .profile-body {
+    padding: 16px 14px 28px;
+  }
 }
 </style>

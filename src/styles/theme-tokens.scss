@@ -97,6 +97,34 @@ body {
   background: transparent !important;
 }
 
+.layout-main,
+.layout-main-view,
+.layout-content {
+  min-height: 0;
+}
+
+.route-scroll-page {
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.route-fade-in {
+  animation: route-fade-in 260ms ease;
+}
+
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .layout-aside .aside {
   border-right: 1px solid var(--border-soft);
   background: rgba(255, 255, 255, 0.78);

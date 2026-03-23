@@ -1,5 +1,5 @@
 <template>
-  <div class="user-home-page">
+  <div class="user-home-page route-scroll-page route-fade-in">
     <el-card shadow="never" class="hero-card">
       <div class="hero-title">欢迎回来，{{ userName }}</div>
       <div class="hero-subtitle">为你精选好物、智能推荐与兴趣榜单</div>
@@ -92,9 +92,7 @@ const top50Goods = ref(
 
 <style scoped>
 .user-home-page {
-  height: calc(100vh - 86px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  min-height: 100%;
   padding: 14px;
 }
 

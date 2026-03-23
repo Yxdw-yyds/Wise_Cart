@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page route-fade-in">
     <OverviewCockpit />
   </div>
 </template>
