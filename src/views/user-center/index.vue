@@ -1,5 +1,7 @@
-﻿<template>
-  <OverviewCockpit />
+<template>
+  <div class="workspace-page route-fade-in">
+    <OverviewCockpit />
+  </div>
 </template>
 
 <script setup>
@@ -12,7 +14,7 @@ defineOptions({
 
 defineRouteMeta({
   name: "userCenter",
-  title: "首页总览驾驶舱",
+  title: "é¦–é¡µæ€»è§ˆé©¾é©¶èˆ±",
   icon: "DataBoard",
   isKeepAlive: true,
 });

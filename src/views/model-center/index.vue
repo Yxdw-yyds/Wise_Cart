@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="model-page-wrap route-fade-in">
+  <div class="workspace-page route-fade-in">
     <RecommendationModelCenter />
   </div>
 </template>
@@ -19,12 +19,3 @@ defineRouteMeta({
   isKeepAlive: true,
 });
 </script>
-
-<style scoped>
-.model-page-wrap {
-  height: calc(100vh - 86px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 12px;
-}
-</style>

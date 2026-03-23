@@ -2,14 +2,16 @@
   <div ref="mallPageRef" class="mall-page route-scroll-page route-fade-in">
     <header class="mall-header">
       <div class="brand" @click="router.push('/user-mall')">
-        <span class="brand-wise">Wise&nbsp;</span><span class="brand-cart">Cart&nbsp;</span><span class="brand-sub">商城</span>
+        <span class="brand-wise">Wise</span>
+        <span class="brand-cart">Cart</span>
+        <span class="brand-sub">用户商城</span>
       </div>
-      <div class="header-spacer"></div>
+
       <div class="header-search">
         <el-autocomplete
           v-model="searchKeyword"
           :fetch-suggestions="querySearch"
-          placeholder="搜索商品、品类或店铺"
+          placeholder="搜索商品、分类或店铺"
           class="search-input"
           clearable
           @select="onSuggestSelect"
@@ -20,21 +22,15 @@
           </template>
         </el-autocomplete>
         <div class="hot-keywords">
-          <span class="hot-label">热门搜索</span>
-          <button
-            v-for="keyword in hotKeywords"
-            :key="keyword"
-            type="button"
-            class="hot-pill"
-            @click="applyKeyword(keyword)"
-          >
+          <span class="hot-label">热门：</span>
+          <button v-for="keyword in hotKeywords" :key="keyword" type="button" class="hot-pill" @click="applyKeyword(keyword)">
             {{ keyword }}
           </button>
         </div>
       </div>
-      <div class="header-spacer"></div>
+
       <div class="header-right">
-        <el-button plain @click="router.push('/user-profile')">用户画像</el-button>
+        <el-button plain @click="router.push('/user-profile')">个人画像</el-button>
         <el-dropdown trigger="click" @command="onUserCommand">
           <div class="avatar-wrap">
             <div class="user-avatar">U</div>
@@ -43,7 +39,7 @@
           </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="profile">用户画像</el-dropdown-item>
+              <el-dropdown-item command="profile">个人画像</el-dropdown-item>
               <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -53,33 +49,47 @@
 
     <section class="hero">
       <div class="hero-copy">
-        <div class="hero-eyebrow">Personalized Retail Experience</div>
-        <div class="hero-title">猜你喜欢 + Top50 兴趣榜</div>
-        <div class="hero-subtitle">基于用户行为标签与偏好向量生成的可解释推荐结果。</div>
+        <div class="hero-eyebrow">Personalized Retail</div>
+        <div class="hero-title">猜你喜欢 + 兴趣 Top50 推荐</div>
+        <div class="hero-subtitle">根据你的浏览与行为数据，系统实时给出更相关的商品与推荐理由，提升发现效率。</div>
         <div class="hero-actions">
-          <el-button type="primary" @click="scrollToSection('guess-anchor')">查看推荐</el-button>
-          <el-button plain @click="router.push('/user-profile')">查看画像</el-button>
+          <el-button type="primary" @click="scrollToSection('guess-anchor')">查看猜你喜欢</el-button>
+          <el-button plain @click="router.push('/user-profile')">查看个人画像</el-button>
         </div>
       </div>
       <div class="hero-visual">
         <div class="visual-card">
-          <span class="visual-kicker">推荐亮点</span>
-          <strong>个性化命中率 92%</strong>
-          <p>融合兴趣偏好、热度得分与 CTR 表现，突出“为什么推荐给你”。</p>
-        </div>
-        <div class="visual-points">
-          <div class="visual-point"><span>6</span>大品类偏好</div>
-          <div class="visual-point"><span>50</span>条候选榜单</div>
-          <div class="visual-point"><span>3</span>类推荐理由</div>
+          <span class="visual-kicker">推荐匹配度</span>
+          <strong>{{ matchRate }}%</strong>
+          <p>基于当前样本估算的推荐匹配强度，分值越高表示个性化结果越贴合你的兴趣。</p>
         </div>
       </div>
     </section>
 
+    <div class="summary-row">
+      <el-card shadow="never" class="summary-item">
+        <span>候选商品</span>
+        <b>{{ products.length }}</b>
+      </el-card>
+      <el-card shadow="never" class="summary-item">
+        <span>猜你喜欢</span>
+        <b>{{ guessLikeList.length }}</b>
+      </el-card>
+      <el-card shadow="never" class="summary-item">
+        <span>Top50商品</span>
+        <b>{{ top50List.length }}</b>
+      </el-card>
+      <el-card shadow="never" class="summary-item">
+        <span>平均兴趣分</span>
+        <b>{{ avgInterest }}</b>
+      </el-card>
+    </div>
+
     <section class="section-card">
       <div class="section-head">
         <div>
-          <h3>商品流</h3>
-          <p>统一卡片比例与信息层级，突出价格、标签和店铺信息。</p>
+          <h3>商品池</h3>
+          <p>可按关键词和分类筛选，支持快速定位商品。</p>
         </div>
       </div>
 
@@ -119,11 +129,8 @@
         </article>
       </div>
 
-      <el-empty v-else description="没有找到匹配商品，试试热门搜索词或切换分类。">
-        <template #image>
-          <div class="empty-illustration">🔎</div>
-        </template>
-        <el-button type="primary" @click="resetSearch">清空筛选</el-button>
+      <el-empty v-else description="没有匹配的商品，试试其他关键词。">
+        <el-button type="primary" @click="resetSearch">重置筛选</el-button>
       </el-empty>
     </section>
 
@@ -131,9 +138,9 @@
       <div class="section-head">
         <div>
           <h3>猜你喜欢</h3>
-          <p>增加推荐理由标签，让个性化逻辑更易被感知。</p>
+          <p>根据最近行为计算的高相关商品。</p>
         </div>
-        <el-button link type="primary" @click="refreshGuess">换一批</el-button>
+        <el-button link type="primary" @click="refreshGuess">刷新推荐</el-button>
       </div>
 
       <div v-if="isGuessLoading" class="guess-grid">
@@ -155,7 +162,7 @@
               <div class="guess-name">{{ item.name }}</div>
               <span class="reason-badge">{{ item.reasonTag }}</span>
             </div>
-            <div class="guess-score">推荐分：{{ item.score }}</div>
+            <div class="guess-score">推荐得分 {{ item.score }}</div>
             <div class="guess-reason">{{ item.reason }}</div>
             <div class="guess-footer">
               <span>{{ categoryLabel(item.category) }}</span>
@@ -165,23 +172,19 @@
         </el-col>
       </el-row>
 
-      <el-empty v-else description="当前暂无推荐，系统会优先回退到热门商品。">
-        <template #image>
-          <div class="empty-illustration">✨</div>
-        </template>
-      </el-empty>
+      <el-empty v-else description="当前没有推荐结果，请稍后再试。"></el-empty>
     </section>
 
     <section class="section-card">
       <div class="section-head">
         <div>
-          <h3>用户兴趣 Top50 商品</h3>
-          <p>保留筛选能力，同时优化中等屏宽下的布局伸缩。</p>
+          <h3>兴趣 Top50 商品</h3>
+          <p>可按分类、价格带和热度排序。</p>
         </div>
       </div>
       <div class="toolbar">
         <el-select v-model="activeCategory" class="filter-item">
-          <el-option label="全部类目" value="all" />
+          <el-option label="全部分类" value="all" />
           <el-option v-for="(label, key) in categoryLabels" :key="key" :label="label" :value="key" />
         </el-select>
         <el-select v-model="priceBand" class="filter-item">
@@ -191,15 +194,15 @@
           <el-option label="150+" value="high" />
         </el-select>
         <el-select v-model="top50Sort" class="filter-item">
-          <el-option label="兴趣优先" value="interest" />
-          <el-option label="热度优先" value="hot" />
+          <el-option label="按兴趣分" value="interest" />
+          <el-option label="按热度分" value="hot" />
         </el-select>
-        <el-switch v-model="onlyOnline" inline-prompt active-text="仅在售" inactive-text="全部" />
+        <el-switch v-model="onlyOnline" inline-prompt active-text="仅在线" inactive-text="全部" />
       </div>
       <el-table :data="top50List" border>
         <el-table-column prop="rank" label="排名" width="70" />
         <el-table-column prop="name" label="商品名" min-width="230" />
-        <el-table-column label="类目" width="120">
+        <el-table-column label="分类" width="120">
           <template #default="{ row }">{{ categoryLabel(row.category) }}</template>
         </el-table-column>
         <el-table-column prop="interestScore" label="兴趣分" width="100" />
@@ -236,7 +239,7 @@ const mallPageRef = ref(null);
 const searchKeyword = ref("");
 const isMallLoading = ref(true);
 const isGuessLoading = ref(true);
-const hotKeywords = ["无糖气泡水", "高蛋白酸奶", "美妆精华", "蓝牙耳机"];
+const hotKeywords = ["矿泉水", "燕麦片", "零食", "清洁用品"];
 const {
   products,
   guessLikeList,
@@ -256,6 +259,18 @@ window.setTimeout(() => {
 window.setTimeout(() => {
   isGuessLoading.value = false;
 }, 800);
+
+const matchRate = computed(() => {
+  if (!guessLikeList.value.length) return 0;
+  const total = guessLikeList.value.reduce((sum, item) => sum + (Number(item.score) || 0), 0);
+  return Math.min(99, (total / guessLikeList.value.length).toFixed(1));
+});
+
+const avgInterest = computed(() => {
+  if (!top50List.value.length) return 0;
+  const total = top50List.value.reduce((sum, item) => sum + (Number(item.interestScore) || 0), 0);
+  return (total / top50List.value.length).toFixed(1);
+});
 
 const suggestionPool = computed(() => {
   const categoryItems = Object.values(categoryLabels);
@@ -359,8 +374,10 @@ const onUserCommand = (cmd) => {
 }
 
 .mall-header {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(320px, 760px) auto;
+  align-items: start;
+  justify-content: space-between;
   gap: 14px;
   padding: 16px 18px;
   border-radius: 20px;
@@ -372,8 +389,8 @@ const onUserCommand = (cmd) => {
 .brand {
   display: flex;
   align-items: baseline;
+  gap: 4px;
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .brand-wise,
@@ -386,29 +403,21 @@ const onUserCommand = (cmd) => {
 }
 
 .brand-wise {
-  font-size: 38px;
+  font-size: 36px;
   font-style: italic;
   background-image: linear-gradient(135deg, #ff6700, #ff9a44);
 }
 
 .brand-cart {
-  font-size: 38px;
+  font-size: 36px;
   font-style: italic;
   background-image: linear-gradient(135deg, #295bff, #65b5ff);
 }
 
 .brand-sub {
-  margin-left: 8px;
-  font-size: 30px;
+  margin-left: 6px;
+  font-size: 24px;
   background-image: linear-gradient(135deg, #10b981, #06b6d4);
-}
-
-.header-spacer {
-  flex: 1;
-}
-
-.header-search {
-  flex: 0 1 620px;
 }
 
 .search-input,
@@ -417,14 +426,16 @@ const onUserCommand = (cmd) => {
 }
 
 :deep(.search-input .el-input-group__append .el-button) {
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: 700;
-  background: linear-gradient(135deg, #2a56f6 0%, #22a8e3 100%);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 70%, #3b82f6 100%);
 }
 
 :deep(.search-input .el-input-group__append .el-button:hover) {
-  color: #ffffff;
-  filter: saturate(1.08) brightness(0.98);
+  color: #ffffff !important;
+  filter: saturate(1.06) brightness(0.96);
 }
 
 .hot-keywords {
@@ -457,11 +468,9 @@ const onUserCommand = (cmd) => {
 }
 
 .header-right {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-top: 2px;
 }
 
 .avatar-wrap {
@@ -471,11 +480,6 @@ const onUserCommand = (cmd) => {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 8px;
-  transition: background 0.2s;
-}
-
-.avatar-wrap:hover {
-  background: #f1f5f9;
 }
 
 .user-avatar {
@@ -488,7 +492,6 @@ const onUserCommand = (cmd) => {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
 }
 
 .user-name {
@@ -507,7 +510,7 @@ const onUserCommand = (cmd) => {
   border-radius: 24px;
   padding: 30px 26px;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
   gap: 18px;
   background: linear-gradient(120deg, #ff7a18 0%, #ffb347 38%, #ffdc7d 100%);
   color: #fff;
@@ -518,7 +521,7 @@ const onUserCommand = (cmd) => {
   font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  opacity: 0.85;
+  opacity: 0.86;
 }
 
 .hero-title {
@@ -532,7 +535,7 @@ const onUserCommand = (cmd) => {
   max-width: 560px;
   font-size: 15px;
   line-height: 1.7;
-  opacity: 0.94;
+  opacity: 0.95;
 }
 
 .hero-actions {
@@ -542,11 +545,6 @@ const onUserCommand = (cmd) => {
   flex-wrap: wrap;
 }
 
-.hero-visual {
-  display: grid;
-  gap: 14px;
-}
-
 .visual-card {
   padding: 20px;
   border-radius: 20px;
@@ -554,44 +552,46 @@ const onUserCommand = (cmd) => {
   backdrop-filter: blur(8px);
 }
 
+.visual-kicker {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
 .visual-card strong {
   display: block;
   margin-top: 10px;
-  font-size: 26px;
+  font-size: 28px;
 }
 
 .visual-card p {
-  margin: 10px 0 0;
-  line-height: 1.7;
-  opacity: 0.94;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.65;
 }
 
-.visual-kicker {
-  font-size: 12px;
-  opacity: 0.82;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.visual-points {
+.summary-row {
+  margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
-.visual-point {
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.15);
-  text-align: center;
-  font-size: 13px;
+.summary-item {
+  border-radius: 14px;
 }
 
-.visual-point span {
+.summary-item span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.summary-item b {
   display: block;
+  margin-top: 6px;
   font-size: 26px;
-  font-weight: 900;
-  line-height: 1.2;
+  color: #0f172a;
 }
 
 .section-card {
@@ -837,20 +837,13 @@ const onUserCommand = (cmd) => {
   width: 55%;
 }
 
-.empty-illustration {
-  width: 88px;
-  height: 88px;
-  margin: 0 auto 8px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 36px;
-  background: linear-gradient(135deg, rgba(255, 183, 71, 0.16), rgba(93, 134, 255, 0.16));
-}
-
 @media (max-width: 1200px) {
   .hero {
     grid-template-columns: 1fr;
+  }
+
+  .summary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .products-grid {
@@ -871,17 +864,8 @@ const onUserCommand = (cmd) => {
 
 @media (max-width: 768px) {
   .mall-header {
-    flex-wrap: wrap;
-  }
-
-  .header-spacer {
-    display: none;
-  }
-
-  .header-search {
-    flex: 1 1 100%;
-    order: 10;
-    margin-top: 8px;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 
   .hero {
@@ -894,14 +878,14 @@ const onUserCommand = (cmd) => {
   }
 
   .brand-sub {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .hero-title {
     font-size: 28px;
   }
 
-  .visual-points,
+  .summary-row,
   .products-grid,
   .guess-grid,
   .toolbar {
@@ -909,7 +893,6 @@ const onUserCommand = (cmd) => {
   }
 
   .header-right {
-    width: 100%;
     justify-content: flex-end;
   }
 }

@@ -4,8 +4,8 @@
       <div class="header-inner">
         <div class="brand" @click="router.push('/user-mall')">WiseCart</div>
         <div class="header-copy">
-          <h1 class="header-title">用户画像</h1>
-          <p class="header-subtitle">兴趣分布、用户标签与最近行为轨迹</p>
+          <h1 class="header-title">用户画像中心</h1>
+          <p class="header-subtitle">查看兴趣结构、行为轨迹与个性化推荐依据。</p>
         </div>
         <el-button round @click="router.push('/user-mall')">返回商城</el-button>
       </div>
@@ -17,7 +17,7 @@
           <div class="hero-kicker">User Persona Snapshot</div>
           <div class="hero-main">
             <div>
-              <div class="hero-title">当前偏好聚焦 {{ percentItems[0]?.label || "-" }}</div>
+              <div class="hero-title">当前核心兴趣：{{ percentItems[0]?.label || "-" }}</div>
               <p class="hero-text">{{ userProfile.summary }}</p>
             </div>
             <div class="hero-tags">
@@ -27,15 +27,30 @@
         </el-card>
 
         <el-card shadow="never" class="metric-mini-card">
-          <div class="mini-label">主偏好类目</div>
+          <div class="mini-label">第一兴趣类目</div>
           <div class="mini-value">{{ percentItems[0]?.label || "-" }}</div>
           <div class="mini-sub">{{ percentItems[0]?.percent || 0 }}%</div>
         </el-card>
 
         <el-card shadow="never" class="metric-mini-card">
-          <div class="mini-label">次偏好类目</div>
+          <div class="mini-label">第二兴趣类目</div>
           <div class="mini-value">{{ percentItems[1]?.label || "-" }}</div>
           <div class="mini-sub">{{ percentItems[1]?.percent || 0 }}%</div>
+        </el-card>
+      </div>
+
+      <div class="quick-grid">
+        <el-card shadow="never" class="quick-card">
+          <span>行为记录数</span>
+          <b>{{ behaviorLog.length }}</b>
+        </el-card>
+        <el-card shadow="never" class="quick-card">
+          <span>最近交互商品</span>
+          <b>{{ timelineItems[0]?.productName || "-" }}</b>
+        </el-card>
+        <el-card shadow="never" class="quick-card">
+          <span>兴趣类目数</span>
+          <b>{{ percentItems.length }}</b>
         </el-card>
       </div>
 
@@ -44,7 +59,7 @@
           <template #header>
             <div class="panel-head">
               <span>兴趣雷达图</span>
-              <span class="panel-note">ECharts 动态展示</span>
+              <span class="panel-note">基于历史行为分布</span>
             </div>
           </template>
           <div ref="radarRef" class="radar-chart"></div>
@@ -53,8 +68,8 @@
         <el-card shadow="never" class="panel-card">
           <template #header>
             <div class="panel-head">
-              <span>兴趣分布</span>
-              <span class="panel-note">按类目排序</span>
+              <span>兴趣占比</span>
+              <span class="panel-note">各类目权重</span>
             </div>
           </template>
           <div class="progress-list">
@@ -67,7 +82,7 @@
                 <b class="cat-pct">{{ item.percent }}%</b>
               </div>
               <div class="bar-track">
-                <div class="bar-fill" :style="{ width: item.percent + '%', background: catColors[item.key] }"></div>
+                <div class="bar-fill" :style="{ width: `${item.percent}%`, background: catColors[item.key] }"></div>
               </div>
             </div>
           </div>
@@ -77,7 +92,7 @@
           <template #header>
             <div class="panel-head">
               <span>行为时间线</span>
-              <span class="panel-note">最近浏览 / 收藏 / 加购 / 购买</span>
+              <span class="panel-note">浏览 / 收藏 / 加购 / 购买</span>
             </div>
           </template>
           <el-timeline>
@@ -143,10 +158,10 @@ const percentItems = computed(() =>
 const productMap = computed(() => Object.fromEntries(products.value.map((item) => [item.id, item])));
 
 const actionLabelMap = {
-  view: "浏览了",
-  fav: "收藏了",
-  cart: "加入购物车",
-  buy: "购买了",
+  view: "浏览",
+  fav: "收藏",
+  cart: "加购",
+  buy: "购买",
 };
 
 const actionTypeMap = {
@@ -166,9 +181,9 @@ const timelineItems = computed(() =>
         ...event,
         productName: product?.name || `商品 ${event.productId}`,
         categoryName: categoryLabels[event.category] || event.category,
-        actionText: actionLabelMap[event.action] || "触发了",
+        actionText: actionLabelMap[event.action] || "交互",
         timelineType: actionTypeMap[event.action] || "info",
-        detail: `${product?.shop || "推荐场景"} · ${dayjs(event.ts).format("MM-DD HH:mm")}`,
+        detail: `${product?.shop || "推荐系统"} · ${dayjs(event.ts).format("MM-DD HH:mm")}`,
         timeText: dayjs(event.ts).format("YYYY-MM-DD HH:mm"),
       };
     })
@@ -205,7 +220,7 @@ const renderRadar = () => {
         data: [
           {
             value: percentItems.value.map((item) => item.percent),
-            name: "兴趣分布",
+            name: "兴趣占比",
           },
         ],
       },
@@ -364,6 +379,25 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
+.quick-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quick-card span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.quick-card b {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
 .content-grid {
   margin-top: 16px;
   display: grid;
@@ -487,6 +521,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1200px) {
   .summary-grid,
+  .quick-grid,
   .content-grid {
     grid-template-columns: 1fr;
   }

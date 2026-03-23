@@ -1,5 +1,5 @@
 <template>
-  <div class="behavior-page">
+  <div class="behavior-page workspace-stack">
     <el-card shadow="never" class="hero-card">
       <div class="hero-head">
         <div>
@@ -148,7 +148,17 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .mt12 {
-  margin-top: 12px;
+  margin-top: 0;
+}
+
+.behavior-page {
+  display: grid;
+  gap: 14px;
+}
+
+.hero-card {
+  border-radius: 18px;
+  background: linear-gradient(125deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.95) 46%, rgba(245, 158, 11, 0.12));
 }
 
 .hero-head,
@@ -161,21 +171,28 @@ onBeforeUnmount(() => {
 
 .hero-head h2 {
   margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .hero-head p {
   margin: 8px 0 0;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .panel-note {
-  color: #64748b;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 
 .grid {
   display: grid;
   gap: 12px;
+}
+
+.grid :deep(.el-card) {
+  border-radius: 16px;
 }
 
 .grid.two {

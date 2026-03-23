@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-page">
+  <div class="workspace-page route-fade-in profile-page">
     <el-row :gutter="16" class="profile-row">
       <el-col :xs="24" :lg="8">
         <el-card shadow="never" class="panel-card">
@@ -100,7 +100,8 @@ const onChangePassword = () => {
 
 <style scoped>
 .profile-page {
-  padding: 14px;
+  display: grid;
+  gap: 14px;
 }
 
 .profile-row {
@@ -108,13 +109,13 @@ const onChangePassword = () => {
 }
 
 .panel-card {
-  border-radius: 14px;
+  border-radius: 18px;
 }
 
 .panel-title {
   font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .info-list {
@@ -125,12 +126,12 @@ const onChangePassword = () => {
 
 .info-item {
   font-size: 18px;
-  color: #334155;
+  color: var(--text-secondary);
 }
 
 .info-item span {
   margin-right: 10px;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .left-actions {
@@ -157,8 +158,8 @@ const onChangePassword = () => {
 
 .avatar-label {
   font-size: 14px;
-  font-weight: 600;
-  color: #334155;
+  font-weight: 700;
+  color: var(--text-secondary);
   line-height: 1;
   padding-bottom: 72px;
 }
@@ -170,14 +171,14 @@ const onChangePassword = () => {
 .avatar-box {
   width: 180px;
   height: 180px;
-  border: 1px dashed #b7c5e6;
-  border-radius: 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 60px;
-  color: #64748b;
-  background: #f8fbff;
+  color: var(--text-tertiary);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.9));
 }
 
 .avatar-actions {

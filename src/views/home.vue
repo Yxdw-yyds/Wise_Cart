@@ -1,5 +1,5 @@
 <template>
-  <div class="page route-fade-in">
+  <div class="workspace-page route-fade-in">
     <OverviewCockpit />
   </div>
 </template>
@@ -20,12 +20,3 @@ defineRouteMeta({
   isAffix: true,
 });
 </script>
-
-<style>
-.page {
-  height: calc(100vh - 86px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 12px;
-}
-</style>

@@ -1,11 +1,16 @@
 <template>
-  <div class="user-info-page p-16px">
-    <el-card shadow="never">
+  <div class="workspace-page route-fade-in user-info-page">
+    <el-card shadow="never" class="workspace-hero">
       <template #header>
-        <div class="header">{{ $t("userInfo.title") }}</div>
+        <div class="workspace-head">
+          <div>
+            <h2>{{ $t("userInfo.title") }}</h2>
+            <p>用户基础信息总览与快速筛选。</p>
+          </div>
+        </div>
       </template>
 
-      <el-form :inline="true" :model="queryForm" class="mb-16px">
+      <el-form :inline="true" :model="queryForm" class="workspace-toolbar search-form">
         <el-form-item :label="$t('userInfo.username')">
           <el-input
             v-model="queryForm.username"
@@ -29,7 +34,7 @@
       </el-form>
 
       <el-table :data="filteredUsers" border>
-<el-table-column align="center" type="selection" width="66" :selectable="(row, index)=>true"></el-table-column>
+        <el-table-column align="center" type="selection" width="66" :selectable="() => true"></el-table-column>
 
         <el-table-column prop="username" :label="$t('userInfo.username')" />
         <el-table-column prop="name" :label="$t('userInfo.name')" />
@@ -123,8 +128,26 @@ const onReset = () => {
 </script>
 
 <style scoped>
-.header {
-  font-size: 16px;
-  font-weight: 600;
+.user-info-page {
+  display: grid;
+  gap: 14px;
+}
+
+.workspace-hero {
+  border-radius: 18px;
+}
+
+.search-form {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(128deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.9));
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    display: grid;
+    gap: 8px;
+  }
 }
 </style>

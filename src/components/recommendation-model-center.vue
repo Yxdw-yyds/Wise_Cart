@@ -1,6 +1,6 @@
 ﻿<template>
-  <div class="rmc-page">
-    <el-card shadow="never">
+  <div class="rmc-page workspace-stack">
+    <el-card shadow="never" class="hero-card">
       <div class="header-row">
         <div>
           <h2>推荐与模型分析（CCDRec）</h2>
@@ -16,7 +16,7 @@
       <el-card shadow="never"><div>NDCG@20(test)</div><strong>{{ val('bestTest','ndcg@20') }}</strong></el-card>
     </div>
 
-    <el-card shadow="never" class="mt12">
+    <el-card shadow="never" class="tabs-card mt12">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="模型资产" name="model">
           <el-descriptions :column="2" border>
@@ -154,10 +154,73 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.header-row { display: flex; justify-content: space-between; align-items: center; }
-.value-strip { margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
-.mt12 { margin-top: 12px; }
-.chart { height: 320px; }
-.toolbar { margin-bottom: 12px; display: flex; gap: 8px; }
-@media (max-width: 900px) { .value-strip { grid-template-columns: 1fr; } }
+.rmc-page {
+  display: grid;
+  gap: 14px;
+}
+
+.hero-card {
+  border-radius: 18px;
+  background: linear-gradient(128deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.95) 46%, rgba(245, 158, 11, 0.12));
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-row h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.header-row p {
+  margin: 8px 0 0;
+  color: var(--text-tertiary);
+}
+
+.value-strip {
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.value-strip :deep(.el-card) {
+  border-radius: 16px;
+}
+
+.tabs-card {
+  border-radius: 16px;
+}
+
+.mt12 {
+  margin-top: 0;
+}
+
+.chart {
+  height: 320px;
+}
+
+.toolbar {
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .value-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .header-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>

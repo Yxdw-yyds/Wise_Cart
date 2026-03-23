@@ -713,3 +713,36 @@
   }
 }
 // #endregion
+
+.workspace-page .el-card__header {
+  border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+}
+
+.workspace-page .el-empty__description {
+  color: var(--text-tertiary);
+}
+
+.workspace-page .el-table th.el-table__cell {
+  font-weight: 700;
+}
+
+:where(button, [role="button"], a, .el-input__wrapper, .el-select__wrapper, .el-tabs__item, .el-menu-item):focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.56);
+  outline-offset: 2px;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  background-color: rgba(59, 130, 246, 0.28);
+}

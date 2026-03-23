@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-page p-16px">
+  <div class="dashboard-page workspace-stack">
     <el-card shadow="never" class="hero-card">
       <div class="hero-head">
         <div>
@@ -237,8 +237,15 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.dashboard-page {
+  display: grid;
+  gap: 14px;
+}
+
 .hero-card {
-  padding: 4px 2px;
+  padding: 6px 4px;
+  border-radius: 18px;
+  background: linear-gradient(130deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.95) 45%, rgba(245, 158, 11, 0.12));
 }
 
 .hero-head {
@@ -250,26 +257,29 @@ onBeforeUnmount(() => {
 
 .hero-head h2 {
   margin: 0;
+  font-size: 28px;
+  font-weight: 800;
 }
 
 .hero-head p {
   margin: 8px 0 0;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 12px;
 }
 
 .metric-card {
   min-height: 120px;
+  border-radius: 16px;
 }
 
 .metric-label {
-  color: #64748b;
+  color: var(--text-tertiary);
+  font-size: 13px;
 }
 
 .metric-main {
@@ -283,11 +293,12 @@ onBeforeUnmount(() => {
 .metric-value {
   font-size: 26px;
   font-weight: 800;
+  color: var(--text-primary);
 }
 
 .metric-sub {
   margin-top: 10px;
-  color: #64748b;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 
@@ -309,17 +320,19 @@ onBeforeUnmount(() => {
 }
 
 .charts-grid {
-  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
 .bottom-grid {
-  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.panel-card {
+  border-radius: 16px;
 }
 
 .panel-title {
@@ -327,11 +340,12 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .panel-desc {
-  color: #64748b;
+  color: var(--text-tertiary);
   font-size: 12px;
   font-weight: 500;
 }
