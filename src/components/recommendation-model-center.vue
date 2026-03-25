@@ -4,16 +4,19 @@
       <div class="header-row">
         <div>
           <h2>推荐与模型分析（CCDRec）</h2>
-          <p>全部来自离线训练产物：log + 指标 + TopK。</p>
+          <p>这里保留业务分析视角；完整算法链路与可视化讲解已迁移到“推荐算法展厅”。</p>
         </div>
-        <el-tag type="success">dataset: baby</el-tag>
+        <div class="header-actions">
+          <el-tag type="success">数据集：baby</el-tag>
+          <el-button type="primary" plain @click="goExpo">进入推荐算法展厅</el-button>
+        </div>
       </div>
     </el-card>
 
     <div class="value-strip">
-      <el-card shadow="never"><div>best epoch</div><strong>{{ metrics?.bestEpoch ?? '-' }}</strong></el-card>
-      <el-card shadow="never"><div>Recall@20(valid)</div><strong>{{ val('bestValid','recall@20') }}</strong></el-card>
-      <el-card shadow="never"><div>NDCG@20(test)</div><strong>{{ val('bestTest','ndcg@20') }}</strong></el-card>
+      <el-card shadow="never"><div>最佳轮次</div><strong>{{ metrics?.bestEpoch ?? "-" }}</strong></el-card>
+      <el-card shadow="never"><div>Recall@20（验证集）</div><strong>{{ val("bestValid", "recall@20") }}</strong></el-card>
+      <el-card shadow="never"><div>NDCG@20（测试集）</div><strong>{{ val("bestTest", "ndcg@20") }}</strong></el-card>
     </div>
 
     <el-card shadow="never" class="tabs-card mt12">
@@ -23,7 +26,7 @@
             <el-descriptions-item label="模型">{{ manifest?.model }}</el-descriptions-item>
             <el-descriptions-item label="数据集">{{ manifest?.dataset }}</el-descriptions-item>
             <el-descriptions-item label="产出时间">{{ manifest?.generatedAt }}</el-descriptions-item>
-            <el-descriptions-item label="权重打包进前端">{{ manifest?.weights?.includedInFrontend ? '是':'否' }}</el-descriptions-item>
+            <el-descriptions-item label="权重打包进前端">{{ manifest?.weights?.includedInFrontend ? "是" : "否" }}</el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
 
@@ -31,24 +34,13 @@
           <div ref="metricsRef" class="chart"></div>
           <el-table :data="metricRows" border class="mt12">
             <el-table-column prop="metric" label="指标" />
-            <el-table-column prop="valid" label="best valid" />
-            <el-table-column prop="test" label="best test" />
-          </el-table>
-        </el-tab-pane>
-
-        <el-tab-pane label="个性化推荐" name="topk">
-          <div class="toolbar">
-            <el-input v-model="userId" placeholder="输入用户ID（如 0）" style="width: 240px" />
-            <el-button type="primary" @click="loadUserRecs">查询Top50</el-button>
-          </div>
-          <el-table :data="userRecRows" border>
-            <el-table-column prop="rank" label="rank" width="80" />
-            <el-table-column prop="itemId" label="itemId" />
+            <el-table-column prop="valid" label="最佳验证集" />
+            <el-table-column prop="test" label="最佳测试集" />
           </el-table>
         </el-tab-pane>
 
         <el-tab-pane label="A/B（离线替代）" name="ab">
-          <el-alert type="info" :closable="false" title="当前无在线A/B日志，使用离线 best valid vs best test 对比展示。" />
+          <el-alert type="info" :closable="false" title="当前无在线A/B日志，使用离线最佳验证集与最佳测试集对比展示。" />
           <div ref="abRef" class="chart mt12"></div>
         </el-tab-pane>
       </el-tabs>
@@ -59,15 +51,15 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import * as echarts from "echarts";
-import { loadCcdrecManifest, loadOfflineMetrics, loadUserTopK } from "@/composables/useCcdrecData";
+import { useRouter } from "vue-router";
+import { loadCcdrecManifest, loadOfflineMetrics } from "@/composables/useCcdrecData";
 
-defineOptions({ name: "RecommendationModelCenter" });
+defineOptions({ name: "推荐模型中心" });
 
 const activeTab = ref("model");
 const manifest = ref(null);
 const metrics = ref(null);
-const userId = ref("0");
-const userRecs = ref([]);
+const router = useRouter();
 
 const metricsRef = ref(null);
 const abRef = ref(null);
@@ -88,18 +80,16 @@ const metricRows = computed(() => {
   }));
 });
 
-const userRecRows = computed(() => userRecs.value.map((itemId, idx) => ({ rank: idx + 1, itemId })));
-
 const renderMetricsChart = () => {
   if (!metrics.value) return;
   metricsChart?.setOption({
     tooltip: { trigger: "axis" },
-    legend: { data: ["valid", "test"] },
+    legend: { data: ["验证集", "测试集"] },
     xAxis: { type: "category", data: ["@5", "@10", "@20", "@50"] },
     yAxis: { type: "value" },
     series: [
-      { name: "valid", type: "line", data: [metrics.value.bestValid["recall@5"], metrics.value.bestValid["recall@10"], metrics.value.bestValid["recall@20"], metrics.value.bestValid["recall@50"]] },
-      { name: "test", type: "line", data: [metrics.value.bestTest["recall@5"], metrics.value.bestTest["recall@10"], metrics.value.bestTest["recall@20"], metrics.value.bestTest["recall@50"]] },
+      { name: "验证集", type: "line", data: [metrics.value.bestValid["recall@5"], metrics.value.bestValid["recall@10"], metrics.value.bestValid["recall@20"], metrics.value.bestValid["recall@50"]] },
+      { name: "测试集", type: "line", data: [metrics.value.bestTest["recall@5"], metrics.value.bestTest["recall@10"], metrics.value.bestTest["recall@20"], metrics.value.bestTest["recall@50"]] },
     ],
   });
 };
@@ -108,18 +98,14 @@ const renderAbChart = () => {
   if (!metrics.value) return;
   abChart?.setOption({
     tooltip: { trigger: "axis" },
-    legend: { data: ["best valid", "best test"] },
+    legend: { data: ["最佳验证集", "最佳测试集"] },
     xAxis: { type: "category", data: ["Recall@20", "NDCG@20", "Precision@20", "MAP@20"] },
     yAxis: { type: "value" },
     series: [
-      { name: "best valid", type: "bar", data: [metrics.value.bestValid["recall@20"], metrics.value.bestValid["ndcg@20"], metrics.value.bestValid["precision@20"], metrics.value.bestValid["map@20"]] },
-      { name: "best test", type: "bar", data: [metrics.value.bestTest["recall@20"], metrics.value.bestTest["ndcg@20"], metrics.value.bestTest["precision@20"], metrics.value.bestTest["map@20"]] },
+      { name: "最佳验证集", type: "bar", data: [metrics.value.bestValid["recall@20"], metrics.value.bestValid["ndcg@20"], metrics.value.bestValid["precision@20"], metrics.value.bestValid["map@20"]] },
+      { name: "最佳测试集", type: "bar", data: [metrics.value.bestTest["recall@20"], metrics.value.bestTest["ndcg@20"], metrics.value.bestTest["precision@20"], metrics.value.bestTest["map@20"]] },
     ],
   });
-};
-
-const loadUserRecs = async () => {
-  userRecs.value = await loadUserTopK("baby", userId.value);
 };
 
 const initCharts = async () => {
@@ -135,9 +121,12 @@ const resize = () => {
   abChart?.resize();
 };
 
+const goExpo = () => {
+  router.push("/model-expo/overview");
+};
+
 onMounted(async () => {
   [manifest.value, metrics.value] = await Promise.all([loadCcdrecManifest(), loadOfflineMetrics("baby")]);
-  await loadUserRecs();
   await initCharts();
   window.addEventListener("resize", resize);
 });
@@ -169,6 +158,12 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .header-row h2 {
@@ -221,6 +216,10 @@ onBeforeUnmount(() => {
   .header-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
   }
 }
 </style>

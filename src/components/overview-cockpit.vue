@@ -1,76 +1,40 @@
 <template>
-  <div class="dashboard-page workspace-stack">
-    <el-card shadow="never" class="hero-card">
-      <div class="hero-head">
-        <div>
-          <h2>首页总览驾驶舱</h2>
-          <p>数据集：{{ summary?.dataset || "-" }}，生成时间：{{ manifest?.generatedAt || "-" }}</p>
-        </div>
-        <el-segmented v-model="rangeKey" :options="rangeOptions" />
-      </div>
-    </el-card>
-
-    <div class="metrics-grid">
-      <el-card v-for="item in metricsCards" :key="item.key" shadow="hover" class="metric-card">
-        <div class="metric-label">{{ item.label }}</div>
-        <div class="metric-main">
-          <div class="metric-value">{{ item.value }}</div>
-          <div class="trend" :class="item.delta >= 0 ? 'up' : 'down'">
-            <span>{{ item.delta >= 0 ? "↑" : "↓" }}</span>
-            {{ Math.abs(item.delta).toFixed(1) }}%
-          </div>
-        </div>
-        <div class="metric-sub">环比 {{ item.delta >= 0 ? "增长" : "下降" }} {{ Math.abs(item.delta).toFixed(1) }}%</div>
-      </el-card>
-    </div>
-
-    <div class="charts-grid">
-      <el-card shadow="never" class="panel-card">
-        <template #header>
-          <div class="panel-title">
-            <span>离线指标（Best Valid）</span>
-            <span class="panel-desc">{{ activeRange.label }} 视角</span>
-          </div>
-        </template>
-        <div ref="metricTrendRef" class="chart-box"></div>
-      </el-card>
-      <el-card shadow="never" class="panel-card">
-        <template #header>
-          <div class="panel-title">
-            <span>推荐策略触达</span>
-            <span class="panel-desc">覆盖趋势对比</span>
-          </div>
-        </template>
-        <div ref="strategyRef" class="chart-box"></div>
-      </el-card>
-    </div>
-
-    <div class="bottom-grid">
-      <el-card shadow="never" class="panel-card">
-        <template #header><div class="panel-title">训练与效果告警</div></template>
-        <el-table :data="alerts" border>
-          <el-table-column prop="title" label="告警" />
-          <el-table-column prop="detail" label="详情" />
-        </el-table>
-      </el-card>
-      <el-card shadow="never" class="panel-card">
-        <template #header><div class="panel-title">热门推荐商品（Top10聚合）</div></template>
-        <el-table :data="opsHotItems" border>
-          <el-table-column prop="itemId" label="itemId" />
-          <el-table-column prop="count" label="推荐次数" />
-        </el-table>
-      </el-card>
-    </div>
+  <div class="dashboard-page workspace-stack" v-loading="isLoading" element-loading-text="加载数据中...">
+    <HeroCard 
+      v-model:rangeKey="rangeKey" 
+      :manifest="manifest" 
+      :summary="summary" 
+      :rangeOptions="rangeOptions" 
+    />
+    <MetricsGrid 
+      v-if="!isLoading"
+      :metricsCards="metricsCards" 
+    />
+    <ChartsGrid 
+      v-if="!isLoading"
+      :metricSeries="metricSeries" 
+      :strategySeries="strategySeries" 
+      :activeRangeLabel="activeRange.label" 
+    />
+    <BottomGrid 
+      v-if="!isLoading"
+      :alerts="alerts" 
+      :opsHotItems="opsHotItems" 
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import * as echarts from "echarts";
+import { computed, onMounted, ref } from "vue";
 import { loadCcdrecManifest, loadDatasetSummary, loadOfflineMetrics, loadOpsAnalytics } from "@/composables/useCcdrecData";
+import HeroCard from "./cockpit/HeroCard.vue";
+import MetricsGrid from "./cockpit/MetricsGrid.vue";
+import ChartsGrid from "./cockpit/ChartsGrid.vue";
+import BottomGrid from "./cockpit/BottomGrid.vue";
 
 defineOptions({ name: "OverviewCockpit" });
 
+const isLoading = ref(true);
 const manifest = ref(null);
 const summary = ref(null);
 const metrics = ref(null);
@@ -103,11 +67,6 @@ const rangeProfiles = {
     deltas: [-1.4, 2.1, 3.6, -0.8, 1.2, 2.9],
   },
 };
-
-const metricTrendRef = ref(null);
-const strategyRef = ref(null);
-let metricChart;
-let strategyChart;
 
 const activeRange = computed(() => rangeProfiles[rangeKey.value] || rangeProfiles["30d"]);
 
@@ -178,61 +137,18 @@ const strategySeries = computed(() => {
   );
 });
 
-const renderCharts = () => {
-  const m = metrics.value;
-  const o = ops.value;
-  if (!m || !o) return;
-
-  metricChart?.setOption({
-    color: ["#295bff", "#22c7d6"],
-    tooltip: { trigger: "axis" },
-    legend: { top: 8 },
-    grid: { left: 36, right: 18, top: 44, bottom: 28 },
-    xAxis: { type: "category", data: ["@5", "@10", "@20", "@50"] },
-    yAxis: { type: "value" },
-    series: [
-      { name: "Recall", type: "line", smooth: true, symbolSize: 8, data: metricSeries.value.recall },
-      { name: "NDCG", type: "line", smooth: true, symbolSize: 8, data: metricSeries.value.ndcg },
-    ],
-  });
-
-  strategyChart?.setOption({
-    color: ["#ff8a2a"],
-    tooltip: { trigger: "axis" },
-    grid: { left: 36, right: 18, top: 28, bottom: 28 },
-    xAxis: { type: "category", data: ["recommend", "recall", "marketing", "coupon"] },
-    yAxis: { type: "value" },
-    series: [{ type: "bar", barWidth: 34, data: strategySeries.value, itemStyle: { borderRadius: [10, 10, 0, 0] } }],
-  });
-};
-
-const resize = () => {
-  metricChart?.resize();
-  strategyChart?.resize();
-};
-
-watch(rangeKey, () => {
-  renderCharts();
-});
-
 onMounted(async () => {
-  [manifest.value, summary.value, metrics.value, ops.value] = await Promise.all([
-    loadCcdrecManifest(),
-    loadDatasetSummary("baby"),
-    loadOfflineMetrics("baby"),
-    loadOpsAnalytics("baby"),
-  ]);
-  await nextTick();
-  metricChart = metricTrendRef.value ? echarts.init(metricTrendRef.value) : null;
-  strategyChart = strategyRef.value ? echarts.init(strategyRef.value) : null;
-  renderCharts();
-  window.addEventListener("resize", resize);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", resize);
-  metricChart?.dispose();
-  strategyChart?.dispose();
+  isLoading.value = true;
+  try {
+    [manifest.value, summary.value, metrics.value, ops.value] = await Promise.all([
+      loadCcdrecManifest(),
+      loadDatasetSummary("baby"),
+      loadOfflineMetrics("baby"),
+      loadOpsAnalytics("baby"),
+    ]);
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 
@@ -240,142 +156,6 @@ onBeforeUnmount(() => {
 .dashboard-page {
   display: grid;
   gap: 14px;
-}
-
-.hero-card {
-  padding: 6px 4px;
-  border-radius: 18px;
-  background: linear-gradient(130deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.95) 45%, rgba(245, 158, 11, 0.12));
-}
-
-.hero-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.hero-head h2 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 800;
-}
-
-.hero-head p {
-  margin: 8px 0 0;
-  color: var(--text-tertiary);
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.metric-card {
-  min-height: 120px;
-  border-radius: 16px;
-}
-
-.metric-label {
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.metric-main {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.metric-value {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.metric-sub {
-  margin-top: 10px;
-  color: var(--text-tertiary);
-  font-size: 12px;
-}
-
-.trend {
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.trend.up {
-  color: #0f9f63;
-  background: rgba(25, 179, 107, 0.12);
-}
-
-.trend.down {
-  color: #dc2626;
-  background: rgba(243, 91, 107, 0.12);
-}
-
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.bottom-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.panel-card {
-  border-radius: 16px;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.panel-desc {
-  color: var(--text-tertiary);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.chart-box {
-  height: 320px;
-}
-
-@media (max-width: 1200px) {
-  .metrics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .hero-head,
-  .metrics-grid,
-  .charts-grid,
-  .bottom-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-head {
-    display: grid;
-  }
-
-  .metrics-grid,
-  .charts-grid,
-  .bottom-grid {
-    display: grid;
-  }
+  min-height: 400px;
 }
 </style>

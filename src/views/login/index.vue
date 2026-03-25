@@ -1,13 +1,13 @@
-<template>
+﻿<template>
   <div class="login-shell">
     <Top />
     <div class="login-layout">
       <section class="brand-panel">
         <div class="brand-logo" aria-label="WiseCart">
           <span class="logo-main">WiseCart</span>
-          <span class="logo-cn">慧购车</span>
+          <span class="logo-cn">慧购物</span>
         </div>
-        <p class="brand-kicker">WISE CART PLATFORM</p>
+        <p class="brand-kicker">智慧零售平台</p>
         <h1>
           <span>让数据驱动更好的</span>
           <span>运营决策</span>
@@ -19,7 +19,7 @@
         <div class="brand-stats">
           <div class="stat-card">
             <span>个性化推荐</span>
-            <strong>Top50 + 猜你喜欢</strong>
+            <strong>前50 + 猜你喜欢</strong>
           </div>
           <div class="stat-card">
             <span>运营洞察</span>
@@ -28,8 +28,8 @@
         </div>
       </section>
 
-        <el-card class="login-card" shadow="never">
-          <h3>{{ $t("login.login") }}</h3>
+      <el-card class="login-card" shadow="never">
+        <h3>{{ $t("login.login") }}</h3>
         <p class="login-sub">登录后继续访问你的工作台</p>
 
         <el-form
@@ -62,13 +62,6 @@
             </el-input>
           </el-form-item>
 
-          <el-form-item>
-            <el-radio-group v-model="loginRole" class="role-switch">
-              <el-radio-button label="user">用户</el-radio-button>
-              <el-radio-button label="admin">管理员</el-radio-button>
-            </el-radio-group>
-          </el-form-item>
-
           <div v-if="validErrmsg" class="el-alert el-alert--error is-light justify-center !mb-16px">
             {{ validErrmsg }}
           </div>
@@ -76,12 +69,6 @@
           <el-form-item>
             <el-button class="w-full login-button" type="primary" :loading="loading" @click="handleLogin(false)">
               {{ $t("login.login") }}
-            </el-button>
-          </el-form-item>
-
-          <el-form-item v-if="loginRole === 'user'">
-            <el-button class="w-full" plain native-type="button" @click="forceEnterUserMall">
-              强制进入用户商城
             </el-button>
           </el-form-item>
 
@@ -108,13 +95,7 @@ const formRef = ref();
 const errs = ref({});
 const codeRef = ref();
 const router = useRouter();
-const loginRole = ref(localStorage.getItem("loginRole") || "user");
 const localLoginError = ref("");
-
-const DEMO_USER = {
-  username: "mall_user",
-  password: "mall123456",
-};
 
 defineRouteMeta({
   layout: {
@@ -123,10 +104,41 @@ defineRouteMeta({
 });
 
 defineOptions({
-  name: "CustomerLoginPage",
+  name: "登录页",
 });
 
 const { baseForm, formRules, loading, doLogin, ldap, error } = useLogin(formRef, codeRef);
+
+const staticWorkbenchIds = new Set([
+  "workbench-root",
+  "workbench-expo",
+  "workbench-expo-overview",
+  "workbench-expo-diffusion",
+  "workbench-expo-sampling",
+  "workbench-expo-results",
+  "workbench-overview",
+  "workbench-behavior",
+  "workbench-top50",
+  "workbench-model",
+  "workbench-ops",
+]);
+
+const staticWorkbenchUrls = new Set([
+  "/model-expo/overview",
+  "/model-expo/diffusion",
+  "/model-expo/sampling",
+  "/model-expo/results",
+  "/home",
+  "/behavior-analysis",
+  "/behavior-top50",
+  "/model-center",
+  "/operations-decision",
+]);
+
+const sanitizeMenus = (menus) => {
+  if (!Array.isArray(menus)) return [];
+  return menus.filter((item) => !staticWorkbenchIds.has(item?.id) && !staticWorkbenchUrls.has(item?.url));
+};
 
 const validate = (prop, isValid, message) => {
   if (!isValid) errs.value[prop] = message;
@@ -143,31 +155,25 @@ const validErrmsg = computed(() => {
 
 const handleLogin = async (isLdap = false) => {
   try {
-    localStorage.setItem("loginRole", loginRole.value);
-
-    if (loginRole.value === "user") {
-      const username = String(baseForm.username || "").trim();
-      const password = String(baseForm.password || "").trim();
-      if (username === DEMO_USER.username && password === DEMO_USER.password) {
-        localLoginError.value = "";
-        forceEnterUserMall();
-      } else {
-        localLoginError.value = "用户账号或密码错误（Demo: mall_user / mall123456）";
-      }
-      return;
-    }
-
+    localStorage.setItem("loginRole", "admin");
     localLoginError.value = "";
     await doLogin(isLdap);
+    try {
+      const raw = localStorage.getItem("userInfo");
+      if (raw) {
+        const userInfo = JSON.parse(raw);
+        userInfo.menus = sanitizeMenus(userInfo.menus);
+        const payload = JSON.stringify(userInfo);
+        localStorage.setItem("userInfo", payload);
+        localStorage.setItem("user", payload);
+        localStorage.setItem("loginUser", payload);
+        sessionStorage.setItem("userInfo", payload);
+      }
+    } catch (_) {}
     router.replace("/home");
   } catch (e) {
-    localLoginError.value = e?.message || "Login failed";
+    localLoginError.value = e?.message || "登录失败";
   }
-};
-
-const forceEnterUserMall = () => {
-  localStorage.setItem("loginRole", "user");
-  window.location.assign(`${window.location.origin}${window.location.pathname}#/user-mall?ts=${Date.now()}`);
 };
 </script>
 
@@ -195,10 +201,6 @@ const forceEnterUserMall = () => {
   align-items: center;
 }
 
-.brand-panel {
-  padding-right: 12px;
-}
-
 .brand-logo {
   display: flex;
   align-items: baseline;
@@ -221,10 +223,9 @@ const forceEnterUserMall = () => {
 }
 
 .logo-main {
-  font-size: 84px;
+  font-size: 64px;
   font-family: "Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-style: italic;
-  font-weight: 900;
   letter-spacing: 0.02em;
   background-image: linear-gradient(125deg, #ff5a00 0%, #ff8a00 28%, #2f5bff 62%, #00bcd4 100%);
 }
@@ -237,7 +238,7 @@ const forceEnterUserMall = () => {
 }
 
 .brand-kicker {
-  margin: 0;
+  margin: 14px 0 0;
   font-size: 12px;
   letter-spacing: 0.14em;
   color: #5b708f;
@@ -326,18 +327,6 @@ const forceEnterUserMall = () => {
   padding: 0;
 }
 
-.role-switch {
-  width: 100%;
-}
-
-.role-switch :deep(.el-radio-button) {
-  flex: 1;
-}
-
-.role-switch :deep(.el-radio-button__inner) {
-  width: 100%;
-}
-
 @media (max-width: 1024px) {
   .login-layout {
     grid-template-columns: 1fr;
@@ -345,7 +334,7 @@ const forceEnterUserMall = () => {
     padding-top: 44px;
   }
 
-  .logo-main {
+  .brand-logo {
     font-size: 62px;
   }
 
@@ -367,7 +356,7 @@ const forceEnterUserMall = () => {
     grid-template-columns: 1fr;
   }
 
-  .logo-main {
+  .brand-logo {
     font-size: 50px;
   }
 

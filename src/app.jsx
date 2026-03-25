@@ -1,4 +1,4 @@
-import { defineRuntimeConfig } from "@kesplus/kesplus";
+﻿import { defineRuntimeConfig } from "@kesplus/kesplus";
 
 export function defineAccessConfig(memo) {
   memo.ignoreAccess ??= [];
@@ -7,35 +7,55 @@ export function defineAccessConfig(memo) {
   memo.ignoreAccess.push("/user-center");
   memo.ignoreAccess.push("/behavior-analysis");
   memo.ignoreAccess.push("/model-center");
+  memo.ignoreAccess.push("/model-expo/overview");
+  memo.ignoreAccess.push("/model-expo/diffusion");
+  memo.ignoreAccess.push("/model-expo/sampling");
+  memo.ignoreAccess.push("/model-expo/results");
   memo.ignoreAccess.push("/operations-decision");
   memo.ignoreAccess.push("/avatar");
-  memo.ignoreAccess.push("/user-home");
-  memo.ignoreAccess.push("/user-mall");
-  memo.ignoreAccess.push("/user-profile");
+  memo.ignoreAccess.push("/workbench/user-profile");
+  memo.ignoreAccess.push("/behavior-top50");
   return memo;
 }
 
 export default defineRuntimeConfig({});
-
-const ADMIN_ROUTES = [
-  "/home",
-  "/behavior-analysis",
-  "/model-center",
-  "/operations-decision",
-  "/avatar",
-  "/user-info",
-  "/user-center",
-];
-
-const USER_ROUTES = ["/user-home", "/user-mall", "/user-profile"];
 
 function setRoutePathAttr(path) {
   document?.body?.setAttribute("data-route-path", path || "");
 }
 
 function ensureAdminBootstrap() {
-  const role = localStorage.getItem("loginRole");
-  if (role !== "admin") return;
+  const staticWorkbenchIds = new Set([
+    "workbench-root",
+    "workbench-expo",
+    "workbench-expo-overview",
+    "workbench-expo-diffusion",
+    "workbench-expo-sampling",
+    "workbench-expo-results",
+    "workbench-overview",
+    "workbench-behavior",
+    "workbench-top50",
+    "workbench-model",
+    "workbench-ops",
+  ]);
+  const staticWorkbenchUrls = new Set([
+    "/model-expo/overview",
+    "/model-expo/diffusion",
+    "/model-expo/sampling",
+    "/model-expo/results",
+    "/home",
+    "/behavior-analysis",
+    "/behavior-top50",
+    "/model-center",
+    "/operations-decision",
+  ]);
+
+  const sanitizeMenus = (menus) => {
+    if (!Array.isArray(menus)) return [];
+    return menus.filter((item) => !staticWorkbenchIds.has(item?.id) && !staticWorkbenchUrls.has(item?.url));
+  };
+
+  localStorage.setItem("loginRole", "admin");
 
   const demoToken =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlZmZlY3Rfc2Vjb25kIjo5OTk5OTk5OTk5LCJpZCI6ImRlbW8iLCJhcHBJZCI6MX0.demo";
@@ -43,10 +63,10 @@ function ensureAdminBootstrap() {
     token: demoToken,
     refreshToken: demoToken,
     tokenCreateTime: Date.now(),
-    realName: "应用管理员",
+    realName: "admin",
     username: "admin",
     userName: "admin",
-    nickName: "应用管理员",
+    nickName: "admin",
     roles: "admin",
     permission: ["*"],
     menus: [],
@@ -71,6 +91,7 @@ function ensureAdminBootstrap() {
   if (!current.id) current.id = current.userId;
   if (!current.token) current.token = demoToken;
   if (!current.refreshToken) current.refreshToken = current.token;
+  current.menus = sanitizeMenus(current.menus);
 
   const payload = JSON.stringify(current);
   localStorage.setItem("token", current.token);
@@ -88,7 +109,6 @@ function ensureAdminBootstrap() {
 export function onAppCreated({ app }) {
   ensureAdminBootstrap();
   const router = app?.config?.globalProperties?.$router;
-  const getRole = () => localStorage.getItem("loginRole") || "admin";
 
   const syncRouteAttr = (path) => {
     setRoutePathAttr(path || "/");
@@ -99,20 +119,9 @@ export function onAppCreated({ app }) {
     syncRouteAttr(window.location.hash.replace(/^#/, "") || "/");
   });
 
-  router?.beforeEach((to, from, next) => {
-    const role = getRole();
-    if (role === "user" && ADMIN_ROUTES.some((route) => to?.path?.startsWith(route))) {
-      next("/user-mall");
-      return;
-    }
-    if (role === "admin" && USER_ROUTES.some((route) => to?.path?.startsWith(route))) {
-      next("/home");
-      return;
-    }
-    next();
-  });
-
   router?.afterEach((to) => {
     syncRouteAttr(to?.path || "/");
   });
 }
+
+
