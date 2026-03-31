@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="workspace-page route-fade-in">
     <UserBehaviorAnalysis />
   </div>
@@ -14,7 +14,7 @@ defineOptions({
 
 defineRouteMeta({
   name: "workbenchBehavior",
-  title: "用户行为分析",
+  title: "用户行为诊断",
   icon: "DataLine",
   isKeepAlive: true,
 });

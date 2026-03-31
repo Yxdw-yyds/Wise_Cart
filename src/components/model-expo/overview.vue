@@ -1,9 +1,9 @@
 <template>
-  <div class="expo-page expo-scroll">
+  <div          class="expo-page expo-scroll">
     <section class="hero-panel reveal-panel">
       <div class="hero-copy">
-        <div class="eyebrow">WiseCart 推荐算法展厅</div>
-        <h2>从 Item ID 初始表示到 Top50 输出，按代码真实实现讲清 CCDRec 如何运作</h2>
+        <div class="eyebrow">技术文档</div>
+        <h2>CCDRec 推荐模型技术说明</h2>
         <p>
           这不是泛化的“多模态推荐概述”，而是严格对应你本地
           <code>ccdrec.py</code> 和 <code>diffusion_ver15.py</code> 的答辩版海报页。
@@ -17,121 +17,39 @@
         </div>
       </div>
       <div class="hero-stats">
-        <div v-for="fact in summaryFacts" :key="fact.label" class="stat-tile">
-          <span>{{ fact.label }}</span>
+        <div v-for="fact in summaryFacts" :key="fact.label" class="stat-tile"><span>{{ fact.label }}</span>
+          
           <strong>{{ fact.value }}</strong>
         </div>
       </div>
     </section>
 
-    <section class="poster-panel reveal-panel">
-      <header class="section-head compact">
-        <div>
-          <h3>算法总览</h3>
-          <p>先让老师 3 秒看懂：这个模型到底在做哪 5 件事。</p>
-        </div>
-      </header>
-      <div class="poster-track">
-        <div v-for="(node, index) in posterSteps" :key="node.key" class="poster-node" :style="{ '--poster-color': node.color, animationDelay: `${index * 90}ms` }">
-          <span>{{ node.kicker }}</span>
-          <strong>{{ node.title }}</strong>
-          <p>{{ node.summary }}</p>
-        </div>
-      </div>
-    </section>
+    
 
     <section class="card-grid">
-      <article v-for="item in overviewCards" :key="item.title" class="module-card reveal-panel">
-        <div class="module-dot" :style="{ background: item.accent }"></div>
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.description }}</p>
-      </article>
+      
+    </section>
+
+    <!-- 动态图解：CCDRec 实物级图解 -->
+    <section class="viz-section reveal-panel">
+      <header class="section-head compact" style="margin-bottom:16px">
+        <div>
+          <h3>CCDRec 动态图解</h3>
+          <p>复刻论文原图风格，观察多模态特征向量的真实流动与演变。</p>
+        </div>
+      </header>
+      <ModelExpoVisualization />
     </section>
 
     <section class="notice-grid">
-      <article class="notice-card reveal-panel notice-card--warm">
-        <span>命名差异说明</span>
-        <strong>图传播骨架来自 FREEDOM，训练主逻辑已经替换为 CCDRec 的 curriculum-conditioned diffusion</strong>
-        <p>也就是说，这个实现不是纯粹沿用 FREEDOM，而是在它的图传播框架上叠加了条件扩散与课程式负采样。</p>
-      </article>
-      <article class="notice-card reveal-panel">
-        <span>损失函数总览</span>
-        <strong>主 BPR + 课程负样本 BPR + 文本/图像辅助 BPR + diffusion loss</strong>
-        <p>训练目标是组合式的，既优化排序，又约束多模态条件重建。</p>
-      </article>
+      
+      
     </section>
 
     <section class="main-grid">
-      <article class="flow-board reveal-panel">
-        <header class="section-head">
-          <div>
-            <h3>模块链路与角色分工</h3>
-            <p>点击任一模块，右侧会切换到“代码忠实层”，展示输入、输出、关键位置和训练/推理作用。</p>
-          </div>
-          <el-tag type="info">双层讲解</el-tag>
-        </header>
+      
 
-        <div class="flow-lanes flow-lanes--five">
-          <button
-            v-for="node in modelFlowNodes"
-            :key="node.key"
-            class="flow-node"
-            :class="{ active: activeNode.key === node.key }"
-            :style="{ '--node-color': node.color }"
-            @click="activeKey = node.key"
-          >
-            <span class="flow-node__chip">{{ node.stage }}</span>
-            <strong>{{ node.title }}</strong>
-            <small>{{ node.summary }}</small>
-          </button>
-        </div>
-      </article>
-
-      <aside class="detail-panel reveal-panel">
-        <header class="detail-head">
-          <span class="detail-line" :style="{ background: activeNode.color }"></span>
-          <div>
-            <h3>{{ activeNode.title }}</h3>
-            <p>{{ activeNode.role }}</p>
-          </div>
-        </header>
-
-        <el-collapse class="tech-layer" accordion>
-          <el-collapse-item title="默认层：这一步做什么" name="role">
-            <p>{{ activeNode.summary }}</p>
-          </el-collapse-item>
-          <el-collapse-item title="展开层：输入与输出" name="io">
-            <div class="detail-block">
-              <label>输入</label>
-              <div class="pill-list">
-                <span v-for="item in activeNode.inputs" :key="item" class="pill">{{ item }}</span>
-              </div>
-            </div>
-            <div class="detail-block">
-              <label>输出</label>
-              <div class="pill-list">
-                <span v-for="item in activeNode.outputs" :key="item" class="pill pill--soft">{{ item }}</span>
-              </div>
-            </div>
-          </el-collapse-item>
-          <el-collapse-item title="展开层：代码位置" name="code">
-            <div class="detail-block">
-              <label>代码锚点</label>
-              <p>{{ activeNode.codeAnchor }}</p>
-            </div>
-          </el-collapse-item>
-          <el-collapse-item title="展开层：训练期 / 推理期作用" name="phase">
-            <div class="detail-block">
-              <label>训练期</label>
-              <p>{{ activeNode.trainRole }}</p>
-            </div>
-            <div class="detail-block">
-              <label>推理期</label>
-              <p>{{ activeNode.inferRole }}</p>
-            </div>
-          </el-collapse-item>
-        </el-collapse>
-      </aside>
+      
     </section>
 
     <section class="bottom-grid">
@@ -145,23 +63,7 @@
         <div ref="metricRef" class="chart"></div>
       </article>
 
-      <article class="metric-card reveal-panel">
-        <header class="section-head compact">
-          <div>
-            <h3>损失函数组成</h3>
-            <p>这一块不是讲公式推导，而是讲每一项 loss 在代码里承担什么职责。</p>
-          </div>
-        </header>
-        <div class="loss-list">
-          <div v-for="item in lossTerms" :key="item.name" class="loss-item">
-            <strong>{{ item.name }}</strong>
-            <span>{{ item.formulaText }}</span>
-            <em>权重来源：{{ item.weightSource }}</em>
-            <p>{{ item.purpose }}</p>
-            <small>{{ item.codePath }}</small>
-          </div>
-        </div>
-      </article>
+      
     </section>
   </div>
 </template>
@@ -171,6 +73,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import * as echarts from "echarts";
 import { loadDatasetSummary, loadOfflineMetrics } from "@/composables/useCcdrecData";
 import { lossTerms, metricTrendSeries, modelFlowNodes, overviewCards, posterSteps } from "@/models/ccdrec/expo-data";
+import ModelExpoVisualization from "@/components/model-expo/ccdrec-visualization.vue";
 
 defineOptions({ name: "ModelExpoOverview" });
 

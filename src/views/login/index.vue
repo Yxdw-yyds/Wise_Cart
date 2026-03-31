@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="login-shell">
     <Top />
     <div class="login-layout">
@@ -121,6 +121,8 @@ const staticWorkbenchIds = new Set([
   "workbench-top50",
   "workbench-model",
   "workbench-ops",
+  "workbench-recommendation",
+  "workbench-user-profile",
 ]);
 
 const staticWorkbenchUrls = new Set([
@@ -133,6 +135,8 @@ const staticWorkbenchUrls = new Set([
   "/behavior-top50",
   "/model-center",
   "/operations-decision",
+  "/workbench/recommendation",
+  "/workbench/user-profile",
 ]);
 
 const sanitizeMenus = (menus) => {
@@ -183,9 +187,11 @@ const handleLogin = async (isLdap = false) => {
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(820px 540px at -12% 4%, rgba(255, 122, 24, 0.24), transparent 58%),
-    radial-gradient(980px 620px at 108% -5%, rgba(34, 199, 214, 0.26), transparent 60%),
-    linear-gradient(155deg, #f8fbff 0%, #eef7ff 54%, #f4faff 100%);
+    radial-gradient(900px 600px at 80% 10%,  rgba(139, 92, 246, 0.06), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%,  rgba(59, 130, 246, 0.07), transparent 55%),
+    radial-gradient(820px 540px at -12% 4%,  rgba(255, 122, 24, 0.18),  transparent 58%),
+    radial-gradient(980px 620px at 108% -5%, rgba(34, 199, 214, 0.20),  transparent 60%),
+    linear-gradient(155deg, #f8fafc 0%, #eef4ff 54%, #f4faff 100%);
 }
 
 .login-layout {
@@ -276,9 +282,16 @@ const handleLogin = async (isLdap = false) => {
 .stat-card {
   padding: 16px 18px;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.02), 0 4px 6px -2px rgba(0,0,0,0.01);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 30px -6px rgba(59,130,246,0.10), 0 8px 12px -4px rgba(0,0,0,0.04);
 }
 
 .stat-card span {
@@ -295,11 +308,14 @@ const handleLogin = async (isLdap = false) => {
 }
 
 .login-card {
-  border-radius: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.18);
-  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 40px 80px -12px rgba(15, 23, 42, 0.14),
+    0 10px 15px -3px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  backdrop-filter: blur(20px);
 }
 
 .login-card h3 {
@@ -319,8 +335,16 @@ const handleLogin = async (isLdap = false) => {
 
 .login-button {
   border: 0;
-  background: linear-gradient(135deg, #1a49e8 0%, #0f8dcf 100%);
-  box-shadow: 0 12px 24px rgba(31, 95, 255, 0.3);
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 55%, #0ea5e9 100%);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35), 0 4px 8px rgba(59, 130, 246, 0.2);
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.login-button:hover {
+  box-shadow: 0 16px 36px rgba(79, 70, 229, 0.45), 0 6px 12px rgba(59, 130, 246, 0.25);
+  transform: translateY(-1px);
 }
 
 .captcha :deep(.el-input-group__append) {

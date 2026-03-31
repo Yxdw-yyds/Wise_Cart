@@ -3,8 +3,8 @@
     <el-card shadow="never" class="hero-card">
       <div class="hero-head">
         <div>
-          <h2>用户行为分析</h2>
-          <p>基于 baby.inter + TopK 聚合，补充时间范围筛选和数据解释。</p>
+          <h2>用户行为诊断与策略建议</h2>
+          <p>基于用户活跃度、转化表现和推荐覆盖情况，为不同人群提供差异化运营建议。</p>
         </div>
         <el-segmented v-model="rangeKey" :options="rangeOptions" />
       </div>
@@ -29,16 +29,21 @@
         </template>
         <div ref="coverageRef" class="chart"></div>
       </el-card>
+      <ProductBehaviorMatrix 
+        :opsData="ops"
+        class="wide"
+      />
+      <CoverageEffectAnalysis 
+        :opsData="ops"
+        :summaryData="summary"
+        class="wide"
+      />
       <el-card shadow="never" class="wide">
         <template #header><div class="panel-head"><span>热门推荐商品（Top10）</span></div></template>
         <el-table :data="hotItems" border>
           <el-table-column prop="itemId" label="itemId" />
           <el-table-column prop="count" label="推荐出现次数" />
         </el-table>
-      </el-card>
-      <el-card shadow="never" class="wide">
-        <template #header><div class="panel-head"><span>不可推导字段</span></div></template>
-        <el-empty description="搜索词、地域、设备、订单金额等在线业务日志字段在当前训练产物中不存在" />
       </el-card>
     </div>
   </div>
@@ -48,6 +53,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import * as echarts from "echarts";
 import { loadOpsAnalytics, loadDatasetSummary } from "@/composables/useCcdrecData";
+import ProductBehaviorMatrix from "./behavior/ProductBehaviorMatrix.vue";
+import CoverageEffectAnalysis from "./behavior/CoverageEffectAnalysis.vue";
 
 defineOptions({ name: "UserBehaviorAnalysis" });
 

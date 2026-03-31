@@ -94,6 +94,12 @@ const buildConfig = {
             icon: "Operation",
             url: "/operations-decision",
           },
+          {
+            id: "workbench-recommendation",
+            name: "推荐系统",
+            icon: "Promotion",
+            url: "/workbench/recommendation",
+          },
         ],
       },
     ],

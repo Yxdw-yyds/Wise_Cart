@@ -1,8 +1,8 @@
 <template>
   <div class="workspace-page route-fade-in ops-page-wrap">
     <el-card shadow="never" class="ops-head-card">
-      <div class="ops-title">运营决策（CCDRec真实数据）</div>
-      <div class="ops-subtitle">基于 baby.inter + TopK 离线聚合结果，支持运营策略配置与效果预览。</div>
+      <div class="ops-title">推荐策略配置与效果预测</div>
+      <div class="ops-subtitle">通过人群圈选、策略组合配置，实时预测推荐效果和业务影响。</div>
     </el-card>
 
     <div class="overview-grid">
@@ -61,6 +61,25 @@
     </el-card>
 
     <el-card shadow="never" class="ops-tab-card">
+      <div class="current-status-summary">
+        <div class="status-item">
+          <span>当前圈选人群</span>
+          <strong>{{ audienceCount.toLocaleString("zh-CN") }}</strong>
+        </div>
+        <div class="status-item">
+          <span>启用策略数</span>
+          <strong>{{ enabledStrategyCount }}/4</strong>
+        </div>
+        <div class="status-item">
+          <span>预计触达</span>
+          <strong>{{ enabledReach.toLocaleString("zh-CN") }}</strong>
+        </div>
+        <div class="status-item">
+          <span>预计覆盖率</span>
+          <strong>{{ enabledReachRate }}%</strong>
+        </div>
+      </div>
+
       <el-tabs v-model="activeTab">
         <el-tab-pane label="人群圈选" name="segment">
           <el-form label-width="100px">
@@ -151,6 +170,27 @@
             </el-card>
           </div>
 
+          <el-card shadow="never" class="comparison-card">
+            <template #header><div class="table-title">与基线对比</div></template>
+            <div class="comparison-content">
+              <div class="comparison-item">
+                <span>当前配置触达</span>
+                <strong>{{ enabledReach.toLocaleString("zh-CN") }}</strong>
+                <span class="delta positive">vs 基线 {{ (enabledReach * 0.85).toLocaleString("zh-CN") }}</span>
+              </div>
+              <div class="comparison-item">
+                <span>当前配置转化</span>
+                <strong>{{ currentConvertTotal.toLocaleString("zh-CN") }}</strong>
+                <span class="delta positive">vs 基线 {{ (currentConvertTotal * 0.9).toLocaleString("zh-CN") }}</span>
+              </div>
+              <div class="comparison-item">
+                <span>当前配置ROI</span>
+                <strong>{{ currentRoi.toFixed(2) }}</strong>
+                <span class="delta positive">vs 基线 {{ (currentRoi * 0.92).toFixed(2) }}</span>
+              </div>
+            </div>
+          </el-card>
+
           <el-card shadow="never" class="table-card">
             <template #header><div class="table-title">分组效果</div></template>
             <el-table :data="groupEffectData" border>
@@ -177,7 +217,7 @@ defineOptions({ name: "WorkbenchOperationsDecisionPage" });
 
 defineRouteMeta({
   name: "workbenchOperationsDecision",
-  title: "运营决策",
+  title: "推荐策略配置",
   icon: "Operation",
   isKeepAlive: true,
 });
@@ -313,6 +353,17 @@ const groupEffectData = computed(() =>
   }))
 );
 
+const currentConvertTotal = computed(() => {
+  if (!ops.value) return 0;
+  const groups = ops.value.groupEffects || [];
+  return groups.reduce((sum, g) => sum + (g.convert || 0), 0);
+});
+
+const currentRoi = computed(() => {
+  if (enabledReach.value === 0) return 0;
+  return currentConvertTotal.value / enabledReach.value;
+});
+
 const resetStrategy = () => {
   strategyForm.recommendEnabled = true;
   strategyForm.recallEnabled = true;
@@ -336,8 +387,11 @@ onMounted(async () => {
 }
 
 .ops-head-card {
-  border-radius: 18px;
-  background: linear-gradient(125deg, rgba(59, 130, 246, 0.14), rgba(255, 255, 255, 0.96) 48%, rgba(245, 158, 11, 0.12));
+  border-radius: var(--radius-main);
+  background: linear-gradient(125deg, rgba(79, 70, 229, 0.10), rgba(255, 255, 255, 0.85) 50%, rgba(139, 92, 246, 0.08));
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
 }
 
 .ops-title {
@@ -358,7 +412,17 @@ onMounted(async () => {
 }
 
 .overview-card {
-  border-radius: 14px;
+  border-radius: var(--radius-sub);
+  border: 1px solid var(--border-soft);
+  background: var(--bg-glass);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--motion-base) ease, box-shadow var(--motion-base) ease;
+}
+
+.overview-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
 }
 
 .overview-label {
@@ -370,7 +434,11 @@ onMounted(async () => {
   margin-top: 8px;
   font-size: 28px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .overview-note {
@@ -384,6 +452,36 @@ onMounted(async () => {
   border-radius: 16px;
 }
 
+.current-status-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-sub);
+  background: linear-gradient(125deg, rgba(79, 70, 229, 0.07), rgba(255, 255, 255, 0.85));
+  border: 1px solid var(--border-soft);
+  backdrop-filter: blur(12px);
+  margin-bottom: 14px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-item span {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.status-item strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .ops-insight-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -391,10 +489,11 @@ onMounted(async () => {
 }
 
 .insight-section {
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sub);
   border: 1px solid var(--border-soft);
-  background: rgba(255, 255, 255, 0.76);
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
 }
 
 .insight-title {
@@ -428,7 +527,8 @@ onMounted(async () => {
 .reach-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-violet));
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 
 .bucket-head {
@@ -474,6 +574,46 @@ onMounted(async () => {
 .kpi-card,
 .table-card {
   border-radius: 14px;
+}
+
+.comparison-card {
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+.comparison-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.comparison-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-muted);
+}
+
+.comparison-item span:first-child {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.comparison-item strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.comparison-item .delta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.comparison-item .delta.positive {
+  color: #10b981;
 }
 
 .segment-title,

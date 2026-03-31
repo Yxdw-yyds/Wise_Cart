@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <ModelExpoOverview />
 </template>
 
@@ -10,7 +10,7 @@ defineOptions({ name: "ModelExpoOverviewPage" });
 
 defineRouteMeta({
   name: "modelExpoOverview",
-  title: "算法总览",
+  title: "CCDRec 推荐模型技术说明",
   icon: "DataBoard",
   isKeepAlive: true,
 });

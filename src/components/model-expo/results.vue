@@ -23,20 +23,7 @@
     </section>
 
     <section class="snapshot-grid">
-      <article class="panel reveal-panel">
-        <header class="section-head compact">
-          <div>
-            <h3>配置快照</h3>
-            <p>直接对应 <code>ccdrec.yaml</code> 的关键配置，便于答辩时说明模型设置。</p>
-          </div>
-        </header>
-        <div class="facts-grid facts-grid--config">
-          <div class="fact-card" v-for="fact in configFacts" :key="fact.label">
-            <span>{{ fact.label }}</span>
-            <strong>{{ fact.value }}</strong>
-          </div>
-        </div>
-      </article>
+      
 
       <article class="panel reveal-panel">
         <header class="section-head compact">
@@ -76,22 +63,7 @@
       </article>
     </section>
 
-    <section class="path-board reveal-panel">
-      <header class="section-head">
-        <div>
-          <h3>代码路径回放</h3>
-          <p>从 sample 到 full_sort_predict，一步步说明结果如何落到离线 Top50 文件。</p>
-        </div>
-      </header>
-      <div class="path-grid">
-        <article v-for="item in inferenceSteps" :key="item.step" class="path-card">
-          <span>{{ item.step }}</span>
-          <strong>{{ item.sourceFunction }}</strong>
-          <p>输入：{{ item.input }}</p>
-          <em>输出：{{ item.output }}</em>
-        </article>
-      </div>
-    </section>
+    
 
     <section class="case-board reveal-panel">
       <header class="section-head">

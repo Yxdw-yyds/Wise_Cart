@@ -11,46 +11,16 @@ export function defineAccessConfig(memo) {
   memo.ignoreAccess.push("/model-expo/diffusion");
   memo.ignoreAccess.push("/model-expo/sampling");
   memo.ignoreAccess.push("/model-expo/results");
-  memo.ignoreAccess.push("/model-expo/ccdrec-visualization");
   memo.ignoreAccess.push("/operations-decision");
   memo.ignoreAccess.push("/avatar");
   memo.ignoreAccess.push("/workbench/user-profile");
   memo.ignoreAccess.push("/workbench/algorithm-flow");
   memo.ignoreAccess.push("/behavior-top50");
+  memo.ignoreAccess.push("/workbench/recommendation");
   return memo;
 }
 
 export function defineLayoutConfig(memo) {
-  const targetId = "workbench-expo-ccdrec-visualization";
-  const targetUrl = "/model-expo/ccdrec-visualization";
-
-  const menus = Array.isArray(memo?.menus) ? memo.menus : [];
-  const queue = [...menus];
-  let expoNode = null;
-
-  while (queue.length) {
-    const node = queue.shift();
-    if (!node) continue;
-    if (node?.id === "workbench-expo" || node?.url === "/model-expo/overview") {
-      expoNode = node;
-      break;
-    }
-    if (Array.isArray(node.children)) queue.push(...node.children);
-  }
-
-  if (!expoNode) return memo;
-  expoNode.children ??= [];
-  const exists = expoNode.children.some(
-    (item) => item?.id === targetId || item?.url === targetUrl
-  );
-  if (!exists) {
-    expoNode.children.push({
-      id: targetId,
-      name: "可视化一览",
-      icon: "DataBoard",
-      url: targetUrl,
-    });
-  }
   return memo;
 }
 
@@ -80,7 +50,6 @@ function ensureAdminBootstrap() {
     "workbench-expo-diffusion",
     "workbench-expo-sampling",
     "workbench-expo-results",
-    "workbench-expo-ccdrec-visualization",
     "workbench-overview",
     "workbench-behavior",
     "workbench-top50",
@@ -93,7 +62,6 @@ function ensureAdminBootstrap() {
     "/model-expo/diffusion",
     "/model-expo/sampling",
     "/model-expo/results",
-    "/model-expo/ccdrec-visualization",
     "/home",
     "/behavior-analysis",
     "/behavior-top50",

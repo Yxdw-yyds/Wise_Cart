@@ -16,20 +16,7 @@
       </div>
     </section>
 
-    <section class="rail-panel reveal-panel">
-      <header class="section-head compact">
-        <div>
-          <h3>条件扩散主流程</h3>
-          <p>从加噪到重建，按真实代码顺序展示。</p>
-        </div>
-      </header>
-      <div class="rail-grid">
-        <div v-for="node in diffusionRail" :key="node.key" class="rail-card" :style="{ '--rail-color': node.color }">
-          <span>{{ node.title }}</span>
-          <p>{{ node.desc }}</p>
-        </div>
-      </div>
-    </section>
+    
 
     <section class="chart-panel reveal-panel">
       <header class="section-head compact">
@@ -42,60 +29,17 @@
     </section>
 
     <section class="formula-grid">
-      <article class="formula-card reveal-panel">
-        <span>输入层</span>
-        <strong>x_start(item_id_embedding)</strong>
-        <p>真正进入扩散主路径的是 item ID 的基础 latent，而不是文本或图像本身。</p>
-      </article>
-      <article class="formula-card reveal-panel">
-        <span>条件层</span>
-        <strong>t_start(text) + v_start(image) + t_emb</strong>
-        <p>文本、图像和时间步一起构成条件，帮助模型知道“要重建什么、当前处在第几步”。</p>
-      </article>
-      <article class="formula-card reveal-panel">
-        <span>融合层</span>
-        <strong>selfAttention(diff_i) → predicted_x</strong>
-        <p>代码里不是用简单拼接线性层，而是用注意力把四路输入融合成一个重建表示。</p>
-      </article>
+      
+      
+      
     </section>
 
     <section class="logic-grid">
-      <article class="logic-card reveal-panel">
-        <header>
-          <h3>默认层：为什么这样做</h3>
-        </header>
-        <p>如果直接把文本和图像拼到 item 表示上，模型容易学到静态相关性。扩散重建的目标，是让 item latent 在逐步去噪过程中真正吸收多模态条件。</p>
-      </article>
-      <article class="logic-card reveal-panel">
-        <header>
-          <h3>展开层：固定输入节点</h3>
-        </header>
-        <div class="pill-wrap">
-          <span class="pill">x_start(item_id_embedding)</span>
-          <span class="pill">t_start(text)</span>
-          <span class="pill">v_start(image)</span>
-          <span class="pill">t_emb</span>
-          <span class="pill warm">predicted_x</span>
-        </div>
-      </article>
+      
+      
     </section>
 
-    <section class="code-board reveal-panel">
-      <header class="section-head compact">
-        <div>
-          <h3>代码忠实层</h3>
-          <p>下面这些位置就是展厅文案的事实来源。</p>
-        </div>
-      </header>
-      <div class="code-list">
-        <div v-for="item in visibleHighlights" :key="item.anchor" class="code-item">
-          <strong>{{ item.title }}</strong>
-          <span>{{ item.file }}</span>
-          <em>{{ item.anchor }}</em>
-          <p>{{ item.detail }}</p>
-        </div>
-      </div>
-    </section>
+    
   </div>
 </template>
 

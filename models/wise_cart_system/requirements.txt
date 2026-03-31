@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+torch
+scipy
+pyyaml
+numpy
+pydantic
+# 如果运行出错，请根据您的 PyTorch 版本安装对应的 torch-scatter
+# pip install torch-scatter -f https://data.pyg.org/whl/torch-${TORCH_VERSION}+${CUDA}.html
