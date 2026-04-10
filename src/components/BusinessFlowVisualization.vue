@@ -11,9 +11,9 @@
       </div></div>
       <div class="arrow">→</div>
       <div class="stage"><div class="icon">🎯</div><div class="title">兴趣向量</div><div class="content">
-        <div v-for="(p, c) in interestNormalized" :key="c" class="interest">
-          <div>{{ categoryLabels[c] }}</div><div class="bar"><div class="fill" :style="{ width: p + '%', backgroundColor: getCategoryColor(c) }"></div></div>
-          <div>{{ p }}%</div>
+        <div v-for="item in topInterests" :key="item.key" class="interest">
+          <div>{{ categoryLabels[item.key] || item.key }}</div><div class="bar"><div class="fill" :style="{ width: item.pct + '%', backgroundColor: getCategoryColor(item.key) }"></div></div>
+          <div>{{ item.pct }}%</div>
         </div>
       </div></div>
       <div class="arrow">→</div>
@@ -68,12 +68,12 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue';
-import { useUserMallData } from '@/composables/useUserMallData';
+import { useTmallData } from '@/composables/useTmallData';
 import { useEnhancedRecommendation, getDashboardData } from '@/services/enhancedRecommendationComposer';
 
 defineOptions({ name: 'BusinessFlowVisualization' });
 
-const { products, behaviorLog, categoryLabels } = useUserMallData();
+const { products, behaviorLog, categoryLabels, categoryColors, loadAll: loadTmallData } = useTmallData();
 const { recommendations, userProfile, analysis, loadRecommendations, updateUserProfile, updateAnalysis } = useEnhancedRecommendation();
 
 const conversionFunnel = ref({ view: 0, viewToClick: 0, clickToFav: 0, favToCart: 0, cartToBuy: 0 });
@@ -84,11 +84,17 @@ const models = ref([
   { key: 'content', name: '内容推荐', weight: 0.15 },
 ]);
 
-const colorMap = { drink: '#FF6B6B', snack: '#4ECDC4', daily: '#45B7D1', food: '#FFA07A', beauty: '#FF69B4', digital: '#9B59B6' };
-
-function getCategoryColor(c) { return colorMap[c] || '#95A5A6'; }
+function getCategoryColor(c) { return categoryColors[c] || '#95A5A6'; }
 
 const interestNormalized = computed(() => userProfile.value?.interestNormalized || {});
+const topInterests = computed(() => {
+  const n = interestNormalized.value;
+  return Object.entries(n)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([key, pct]) => ({ key, pct }));
+});
 const metrics = computed(() => analysis.value?.overview || {});
 const avgScore = computed(() => {
   if (!recommendations.value.length) return '0.00';
@@ -102,12 +108,19 @@ function updateBehaviorStats() {
 }
 
 onMounted(async () => {
+  await loadTmallData();
   updateBehaviorStats();
   await loadRecommendations({ userBehavior: behaviorLog.value, allProducts: products.value });
   updateUserProfile(behaviorLog.value);
   updateAnalysis();
   const d = getDashboardData(behaviorLog.value, products.value);
-  conversionFunnel.value = d.funnel;
+  conversionFunnel.value = {
+    view: behaviorStats.value.view || 0,
+    viewToClick: parseFloat(d.funnel.viewToClick) || 0,
+    clickToFav:  parseFloat(d.funnel.clickToFav)  || 0,
+    favToCart:   parseFloat(d.funnel.favToCart)   || 0,
+    cartToBuy:   parseFloat(d.funnel.cartToBuy)   || 0,
+  };
 });
 </script>
 

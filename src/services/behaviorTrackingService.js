@@ -109,17 +109,20 @@ class UserInterestVector {
   updateFromBehaviors(behaviors) {
     behaviors.forEach(({ category, action }) => {
       const weight = ACTION_WEIGHTS[action] || 0;
-      if (this.vector.hasOwnProperty(category)) {
-        this.vector[category] += weight;
+      // 动态支持新类目（如天猫真实类目）
+      if (!this.vector.hasOwnProperty(category)) {
+        this.vector[category] = 0;
       }
+      this.vector[category] += weight;
     });
   }
 
   addBehavior(category, action) {
     const weight = ACTION_WEIGHTS[action] || 0;
-    if (this.vector.hasOwnProperty(category)) {
-      this.vector[category] += weight;
+    if (!this.vector.hasOwnProperty(category)) {
+      this.vector[category] = 0;
     }
+    this.vector[category] += weight;
   }
 
   getVector() {

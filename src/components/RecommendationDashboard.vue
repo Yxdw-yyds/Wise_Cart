@@ -27,7 +27,7 @@
         <div class="panel-header">
           <span class="panel-title">个性化推荐</span>
           <div class="header-actions">
-            <button class="sim-btn" :class="{ running: simRunning }" @click="toggleSim">{{ simRunning ? '⏹ 停止模拟' : '▶ 模拟行为' }}</button>
+            <button class="sim-btn" :class="{ running: simRunning }" @click="toggleSim">{{ simRunning ? '⏹ 停止回放' : '▶ 回放行为' }}</button>
             <button class="refresh-btn" @click="doRefresh">↻ 刷新</button>
           </div>
         </div>
@@ -36,7 +36,7 @@
         </div>
         <div v-else class="rec-cards-grid">
           <RecommendProductCard
-            v-for="rec in recommendations.slice(0,8)" :key="rec.itemId"
+            v-for="rec in recommendations.slice(0,6)" :key="rec.itemId"
             :item-id="rec.itemId" :product="rec.product" :fused-score="rec.fusedScore"
             :rank="rec.rank" :models="rec.models" :explanation="rec.explanation"
             :category-labels="categoryLabels" @interact="handleInteract"
@@ -63,8 +63,6 @@
           <div class="rate-item"><span>加购→购买</span><b>{{ funnel.cartToBuy.toFixed(1) }}%</b></div>
         </div>
       </div>
-    </div>
-    <div class="bottom-grid">
       <div class="panel panel-efficiency">
         <div class="panel-header"><span class="panel-title">推荐效率</span></div>
         <div class="eff-grid">
@@ -89,13 +87,13 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as echarts from 'echarts';
-import { useUserMallData } from '@/composables/useUserMallData';
+import { useTmallData } from '@/composables/useTmallData';
 import { useEnhancedRecommendation, getRecommendationAnalysis, getFullBusinessFlowData } from '@/services/enhancedRecommendationComposer';
 import RecommendProductCard from '@/components/RecommendProductCard.vue';
 
 defineOptions({ name: 'RecommendationDashboard' });
 
-const { products, behaviorLog, categoryLabels, userProfile: mallUserProfile, interestVector } = useUserMallData();
+const { products, behaviorLog, categoryLabels, categoryColors, userProfile: tmallUserProfile, interestVector, loadAll: loadTmallData } = useTmallData();
 const { loading, recommendations, userProfile, analysis, loadRecommendations, updateUserProfile, updateAnalysis, trackInteraction } = useEnhancedRecommendation();
 
 const radarRef = ref(null);
@@ -105,9 +103,9 @@ let funnelChart = null;
 const funnel = ref({ view:0, viewToClick:0, clickToFav:0, favToCart:0, cartToBuy:0 });
 const recentEvents = ref([]);
 let evtCounter = 0;
+let simReplayIndex = 0; // 真实行为回放索引
 
 const actionLabels = { view:'浏览', click:'点击', fav:'收藏', cart:'加购', buy:'购买', skip:'跳过' };
-const categoryColors = { drink:'#FF6B6B', snack:'#4ECDC4', daily:'#45B7D1', food:'#FFA07A', beauty:'#FF69B4', digital:'#9B59B6' };
 
 const metricCards = computed(() => [
   { key:'ctr',   icon:'📈', label:'推荐点击率', value: analysis.value?.overview?.ctr || '0%',               trend:'实时更新', colorClass:'mc-blue'   },
@@ -117,8 +115,8 @@ const metricCards = computed(() => [
 ]);
 
 const topCategories = computed(() => {
-  const n = userProfile.value?.interestNormalized || mallUserProfile.value?.categoryPercents || {};
-  return Object.entries(n).map(([key,percent])=>({key,percent:+percent||0})).sort((a,b)=>b.percent-a.percent).slice(0,4);
+  const n = userProfile.value?.interestNormalized || tmallUserProfile.value?.categoryPercents || {};
+  return Object.entries(n).map(([key,percent])=>({key,percent:+percent||0})).sort((a,b)=>b.percent-a.percent).slice(0,6);
 });
 
 const avgScore = computed(() => {
@@ -128,12 +126,15 @@ const avgScore = computed(() => {
 
 function renderRadar() {
   if (!radarChart) return;
-  const n = userProfile.value?.interestNormalized || mallUserProfile.value?.categoryPercents || {};
-  const entries = Object.entries(n);
+  const n = userProfile.value?.interestNormalized || tmallUserProfile.value?.categoryPercents || {};
+  // 只取 Top 8 类目展示，避免雷达图太拥挤
+  const entries = Object.entries(n).sort((a,b) => b[1] - a[1]).slice(0, 8);
   if (!entries.length) return;
   radarChart.setOption({
     backgroundColor:'transparent', tooltip:{ trigger:'item' },
-    radar:{ radius:'62%', axisName:{ color:'#334155', fontSize:11 },
+    radar:{ radius:'52%', center:['50%','54%'],
+      axisName:{ color:'#334155', fontSize:11, padding:[0,4] },
+      nameGap: 6,
       splitArea:{ areaStyle:{ color:['rgba(79,70,229,0.03)','rgba(79,70,229,0.08)'] } },
       axisLine:{ lineStyle:{ color:'#cbd5e1' } }, splitLine:{ lineStyle:{ color:'#e2e8f0' } },
       indicator: entries.map(([key])=>({ name: categoryLabels[key]||key, max:40 })),
@@ -148,9 +149,10 @@ function renderFunnel() {
   if (!funnelChart) return;
   const f = funnel.value;
   funnelChart.setOption({
-    backgroundColor:'transparent', tooltip:{ trigger:'item' },
-    series:[{ type:'funnel', left:'10%', width:'80%', top:10, bottom:10, sort:'descending', gap:4,
-      label:{ show:true, position:'inside', color:'#fff', fontWeight:700, fontSize:12 },
+    backgroundColor:'transparent', tooltip:{ trigger:'item', formatter:'{b}: {c}%' },
+    series:[{ type:'funnel', left:'5%', width:'60%', top:10, bottom:10, sort:'descending', gap:4,
+      label:{ show:true, position:'right', color:'#334155', fontWeight:600, fontSize:12 },
+      labelLine:{ show:true, length:8, lineStyle:{ width:1, type:'solid' } },
       itemStyle:{ borderWidth:0 },
       data:[
         { value:100,                        name:'浏览', itemStyle:{ color:'#667eea' } },
@@ -188,34 +190,44 @@ function handleInteract({ itemId, action }) {
   updateAnalysis();
 }
 
-function pushEvent({ product, action }) {
+function pushEvent({ product, action, vtime }) {
   evtCounter++;
   recentEvents.value.unshift({
     id: evtCounter, action,
-    productName: product?.name || `商品${evtCounter}`,
-    timeStr: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    productName: product?.name || `天猫商品${evtCounter}`,
+    timeStr: vtime ? vtime.split(' ')[1] || vtime : new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
   });
   if (recentEvents.value.length > 20) recentEvents.value.pop();
 }
 
 const simRunning = ref(false);
 let simTimer = null;
+// 保存初始行为日志长度，用于回放时从真实数据中按顺序取事件
+let initialBehaviorCount = 0;
 
 function toggleSim() {
   if (simRunning.value) {
     clearInterval(simTimer); simTimer = null; simRunning.value = false;
   } else {
     simRunning.value = true;
+    initialBehaviorCount = behaviorLog.value.length;
+    // 从当前回放位置开始，逐条回放真实行为
     simTimer = setInterval(async () => {
-      const actions = ['view','view','view','fav','cart','buy'];
-      const p = products.value[Math.floor(Math.random() * products.value.length)];
-      const action = actions[Math.floor(Math.random() * actions.length)];
+      if (simReplayIndex >= initialBehaviorCount) {
+        simReplayIndex = 0; // 循环回放
+      }
+      const realEvent = behaviorLog.value[simReplayIndex];
+      simReplayIndex++;
+      if (!realEvent) return;
+      const p = products.value.find(prod => prod.id === realEvent.productId) || products.value[0];
+      const action = realEvent.action;
+      // 追加到行为日志（模拟实时产生）
       behaviorLog.value.push({ productId: p.id, category: p.category, action, ts: Date.now() });
-      pushEvent({ product: p, action });
+      pushEvent({ product: p, action, vtime: realEvent.vtime });
       evtCounter++;
       if (evtCounter % 5 === 0) { await doRefresh(); }
       else { updateAnalysis(); renderRadar(); }
-    }, 1500);
+    }, 1200);
   }
 }
 
@@ -224,6 +236,8 @@ function onResize() { radarChart?.resize(); funnelChart?.resize(); }
 watch(() => behaviorLog.value.length, () => { updateUserProfile(behaviorLog.value); renderRadar(); });
 
 onMounted(async () => {
+  // 先加载天猫真实数据
+  await loadTmallData();
   await nextTick();
   radarChart  = radarRef.value  ? echarts.init(radarRef.value)  : null;
   funnelChart = funnelRef.value ? echarts.init(funnelRef.value) : null;
@@ -239,89 +253,184 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.rec-dashboard { display:flex; flex-direction:column; gap:16px; font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif; }
+/* ─── 整体容器 ─── */
+.rec-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
 
-.metrics-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-.metric-card { border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:6px; box-shadow:0 2px 12px rgba(0,0,0,0.07); transition:transform 0.2s ease,box-shadow 0.2s ease; }
-.metric-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.12); }
-.mc-blue   { background:linear-gradient(135deg,#e0edff,#c7d9ff); }
-.mc-green  { background:linear-gradient(135deg,#d1fae5,#a7f3d0); }
-.mc-purple { background:linear-gradient(135deg,#ede9fe,#ddd6fe); }
-.mc-orange { background:linear-gradient(135deg,#fff7ed,#fed7aa); }
-.mc-icon  { font-size:22px; }
-.mc-label { font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; }
-.mc-value { font-size:28px; font-weight:800; color:#1e293b; line-height:1; }
-.mc-trend { font-size:11px; color:#94a3b8; }
+/* ─── 顶部指标卡 ─── */
+.metrics-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.metric-card {
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.metric-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.mc-blue   { background: linear-gradient(135deg, #e0edff, #c7d9ff); }
+.mc-green  { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+.mc-purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+.mc-orange { background: linear-gradient(135deg, #fff7ed, #fed7aa); }
+.mc-icon  { font-size: 22px; }
+.mc-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.mc-value { font-size: 28px; font-weight: 800; color: #1e293b; line-height: 1; }
+.mc-trend { font-size: 11px; color: #94a3b8; }
 
-.main-grid { display:grid; grid-template-columns:minmax(240px,280px) 1fr minmax(220px,260px); gap:14px; align-items:start; }
-.panel { background:#fff; border-radius:16px; padding:18px; box-shadow:0 2px 12px rgba(0,0,0,0.07); }
-.panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.panel-title { font-size:14px; font-weight:700; color:#1e293b; }
-.live-badge { font-size:10px; font-weight:700; color:#10b981; background:rgba(16,185,129,0.1); padding:2px 8px; border-radius:999px; animation:pulse 2s infinite; }
+/* ─── 主网格：3列2行布局 ─── */
+/*
+  布局结构：
+  [雷达图]      [个性化推荐][转化漏斗]
+  [推荐效率]    [  (续)    ][模型贡献度]
+  第2列和第3列之间无间距，第1列右侧有间距
+*/
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 2.5fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 12px;
+  align-items: start;
+  max-width: 1400px;
+}
+.main-grid > * { min-width: 0; overflow: hidden; }
+
+/* 中间推荐面板跨两行 */
+.panel-recs {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+/* ─── 面板通用 ─── */
+.panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.panel-title { font-size: 14px; font-weight: 700; color: #1e293b; white-space: nowrap; }
+.live-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16,185,129,0.1);
+  padding: 2px 8px;
+  border-radius: 999px;
+  animation: pulse 2s infinite;
+}
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-.echart-box { width:100%; height:260px; }
-.echart-funnel { height:300px; }
-.top-cats { display:flex; flex-direction:column; gap:6px; margin-top:10px; border-top:1px solid #f1f5f9; padding-top:10px; }
-.top-cat-item { display:flex; align-items:center; gap:8px; font-size:12px; }
-.cat-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.cat-name { flex:1; color:#475569; }
-.cat-pct  { font-weight:700; color:#1e293b; }
+/* ─── ECharts 图表容器 ─── */
+.echart-box { width: 100%; height: 240px; }
+.echart-funnel { height: 260px; }
 
-.header-actions { display:flex; gap:8px; }
-.sim-btn,.refresh-btn { font-size:12px; font-weight:600; padding:5px 12px; border-radius:8px; border:none; cursor:pointer; transition:all 0.2s; }
-.sim-btn { background:#4f46e5; color:#fff; }
-.sim-btn:hover { background:#4338ca; }
-.sim-btn.running { background:#ef4444; }
-.refresh-btn { background:#f1f5f9; color:#475569; }
-.refresh-btn:hover { background:#e2e8f0; }
+/* ─── 雷达图下方分类列表 ─── */
+.top-cats { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+.top-cat-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cat-name { flex: 1; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-pct  { font-weight: 700; color: #1e293b; }
 
-.loading-state { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; height:200px; color:#94a3b8; font-size:13px; }
-.spinner { width:32px; height:32px; border:3px solid #e2e8f0; border-top-color:#4f46e5; border-radius:50%; animation:spin 0.8s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg)} }
+/* ─── 推荐面板操作按钮 ─── */
+.header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.sim-btn, .refresh-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.sim-btn { background: #4f46e5; color: #fff; }
+.sim-btn:hover { background: #4338ca; }
+.sim-btn.running { background: #ef4444; }
+.refresh-btn { background: #f1f5f9; color: #475569; }
+.refresh-btn:hover { background: #e2e8f0; }
 
-.rec-cards-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+/* ─── 加载状态 ─── */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 200px; color: #94a3b8; font-size: 13px; }
+.spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.event-stream { border-top:1px solid #f1f5f9; padding-top:12px; display:flex; flex-direction:column; gap:6px; }
-.stream-label { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
-.stream-list { display:flex; flex-direction:column; gap:5px; }
-.stream-evt { display:flex; align-items:center; gap:8px; font-size:12px; padding:5px 8px; background:#f8fafc; border-radius:7px; }
-.evt-time  { color:#94a3b8; min-width:64px; }
-.evt-name  { color:#334155; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.evt-action { font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; min-width:34px; text-align:center; }
-.act-view  { background:#e0edff; color:#4f46e5; }
-.act-click { background:#e0edff; color:#4f46e5; }
-.act-fav   { background:#fee2e2; color:#ef4444; }
-.act-cart  { background:#fff7ed; color:#f59e0b; }
-.act-buy   { background:#d1fae5; color:#10b981; }
-.act-skip  { background:#f1f5f9; color:#94a3b8; }
-.stream-item-enter-active { transition:all 0.3s ease; }
-.stream-item-enter-from   { opacity:0; transform:translateY(-8px); }
+/* ─── 推荐卡片网格（3列） ─── */
+.rec-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
 
-.funnel-rates { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; border-top:1px solid #f1f5f9; padding-top:10px; }
-.rate-item { display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:4px 6px; background:#f8fafc; border-radius:6px; }
-.rate-item span { color:#64748b; }
-.rate-item b    { color:#1e293b; font-weight:700; }
+/* ─── 事件流 ─── */
+.event-stream { border-top: 1px solid #f1f5f9; padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.stream-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.stream-list  { display: flex; flex-direction: column; gap: 5px; }
+.stream-evt   { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 8px; background: #f8fafc; border-radius: 7px; }
+.evt-time     { color: #94a3b8; min-width: 64px; }
+.evt-name     { color: #334155; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.evt-action   { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; min-width: 34px; text-align: center; }
+.act-view  { background: #e0edff; color: #4f46e5; }
+.act-click { background: #e0edff; color: #4f46e5; }
+.act-fav   { background: #fee2e2; color: #ef4444; }
+.act-cart  { background: #fff7ed; color: #f59e0b; }
+.act-buy   { background: #d1fae5; color: #10b981; }
+.act-skip  { background: #f1f5f9; color: #94a3b8; }
+.stream-item-enter-active { transition: all 0.3s ease; }
+.stream-item-enter-from   { opacity: 0; transform: translateY(-8px); }
 
-.bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.eff-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-.eff-item { text-align:center; padding:12px 8px; background:#f8fafc; border-radius:10px; }
-.eff-val  { font-size:24px; font-weight:800; color:#1e293b; }
-.eff-lbl  { font-size:11px; color:#94a3b8; margin-top:4px; }
+/* ─── 漏斗转化率 ─── */
+.funnel-rates { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+.rate-item { display: flex; justify-content: space-between; align-items: center; font-size: 10px; padding: 4px 6px; background: #f8fafc; border-radius: 6px; }
+.rate-item span { color: #64748b; }
+.rate-item b    { color: #1e293b; font-weight: 700; }
 
-.model-bars { display:flex; flex-direction:column; gap:12px; }
-.model-bar-item { display:flex; align-items:center; gap:10px; }
-.mbar-label { font-size:12px; color:#475569; width:90px; flex-shrink:0; }
-.mbar-track { flex:1; height:10px; background:#f1f5f9; border-radius:999px; overflow:hidden; }
-.mbar-fill  { height:100%; border-radius:999px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1); }
-.mbar-ccdrec        { background:linear-gradient(90deg,#4f46e5,#8b5cf6); }
-.mbar-collaborative { background:linear-gradient(90deg,#10b981,#34d399); }
-.mbar-content       { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
-.mbar-pct { font-size:12px; font-weight:700; color:#1e293b; width:32px; text-align:right; }
-.avg-score-row { display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid #f1f5f9; font-size:13px; color:#64748b; }
-.avg-score-row strong { font-size:18px; font-weight:800; color:#4f46e5; }
+/* ─── 推荐效率（左下，2×2 适应窄列） ─── */
+.eff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.eff-item { text-align: center; padding: 10px 6px; background: #f8fafc; border-radius: 10px; }
+.eff-val  { font-size: 20px; font-weight: 800; color: #1e293b; }
+.eff-lbl  { font-size: 10px; color: #94a3b8; margin-top: 3px; }
 
-@media (max-width:1280px) { .main-grid { grid-template-columns:1fr; } .rec-cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media (max-width:900px)  { .metrics-row { grid-template-columns:repeat(2,minmax(0,1fr)); } .bottom-grid { grid-template-columns:1fr; } .eff-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media (max-width:600px)  { .rec-dashboard { padding:0; } .metrics-row { grid-template-columns:1fr 1fr; } .rec-cards-grid { grid-template-columns:1fr 1fr; } }
+/* ─── 模型贡献度条 ─── */
+.model-bars { display: flex; flex-direction: column; gap: 10px; }
+.model-bar-item { display: flex; align-items: center; gap: 6px; }
+.mbar-label { font-size: 11px; color: #475569; width: 80px; flex-shrink: 0; }
+.mbar-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+.mbar-fill  { height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.mbar-ccdrec        { background: linear-gradient(90deg, #4f46e5, #8b5cf6); }
+.mbar-collaborative { background: linear-gradient(90deg, #10b981, #34d399); }
+.mbar-content       { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.mbar-pct { font-size: 11px; font-weight: 700; color: #1e293b; width: 28px; text-align: right; }
+.avg-score-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; }
+.avg-score-row strong { font-size: 16px; font-weight: 800; color: #4f46e5; }
+
+/* ─── 响应式断点 ─── */
+@media (max-width: 1000px) {
+  .main-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .panel-recs { grid-column: auto; grid-row: auto; }
+  .rec-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .eff-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .eff-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .rec-dashboard { padding: 0; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .rec-cards-grid { grid-template-columns: 1fr 1fr; }
+}
 </style>

@@ -3,10 +3,8 @@
     <section class="hero reveal-panel">
       <div>
         <div class="eyebrow">结果与案例</div>
-        <h2>把真实 Top50、离线指标、配置快照和代码回放串成一块可答辩的结果面板</h2>
-        <p>
-          这一页直接读取你项目里的离线产物。默认层展示“效果如何”，展开层展示“这些结果在代码里是怎么一步步产生的”。
-        </p>
+        <h2>把真实 Top50、离线指标、配置快照和代码回放串成一块结果面板</h2>
+
       </div>
       <div class="hero-side">
         <div class="select-box">
@@ -29,7 +27,6 @@
         <header class="section-head compact">
           <div>
             <h3>结果摘要</h3>
-            <p>先用老师最关心的几项数字说明当前结果质量。</p>
           </div>
         </header>
         <div class="facts-grid">
@@ -39,6 +36,16 @@
           </div>
         </div>
       </article>
+
+      <article class="panel reveal-panel">
+        <header class="section-head compact" style="margin-bottom: 4px;">
+          <div>
+            <h3>离线指标趋势</h3>
+            <p style="margin: 8px 0 0; color: var(--text-tertiary); font-size: 14px;">用真实指标文件恢复的趋势曲线，展示排序质量随 epoch 的变化。</p>
+          </div>
+        </header>
+        <div ref="trendRef" class="chart" style="height: 380px;"></div>
+      </article>
     </section>
 
     <section class="chart-grid">
@@ -46,7 +53,6 @@
         <header class="section-head compact">
           <div>
             <h3>关键指标对比</h3>
-            <p>来自真实离线指标文件的验证集与测试集表现。</p>
           </div>
         </header>
         <div ref="metricRef" class="chart"></div>
@@ -56,7 +62,6 @@
         <header class="section-head compact">
           <div>
             <h3>热门推荐商品</h3>
-            <p>统计所有用户 Top50 中最常出现的商品，直观看模型输出重心。</p>
           </div>
         </header>
         <div ref="hotRef" class="chart"></div>
@@ -69,7 +74,6 @@
       <header class="section-head">
         <div>
           <h3>用户 {{ selectedUserId }} 的 Top50 案例</h3>
-          <p>每个推荐项都附带人话解释标签，方便你在工作台直接演示。</p>
         </div>
       </header>
       <div class="case-grid">
@@ -93,7 +97,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import * as echarts from "echarts";
 import { loadDatasetSummary, loadOfflineMetrics, loadOpsAnalytics, loadUserTopK } from "@/composables/useCcdrecData";
-import { buildConfidence, buildReasonTags, configSnapshot, inferenceSteps } from "@/models/ccdrec/expo-data";
+import { buildConfidence, buildReasonTags, configSnapshot, inferenceSteps, metricTrendSeries } from "@/models/ccdrec/expo-data";
 
 defineOptions({ name: "ModelExpoResults" });
 
@@ -104,8 +108,10 @@ const topkUsers = ref({});
 const selectedUserId = ref("");
 const metricRef = ref(null);
 const hotRef = ref(null);
+const trendRef = ref(null);
 let metricChart = null;
 let hotChart = null;
+let trendChart = null;
 
 const userOptions = computed(() => Object.keys(topkUsers.value).slice(0, 120));
 
@@ -223,9 +229,38 @@ function renderHotChart() {
   });
 }
 
+function renderTrendChart() {
+  if (!trendChart) return;
+  trendChart.setOption({
+    backgroundColor: "transparent",
+    color: ["#3b82f6", "#16a34a", "#f59e0b", "#e11d48"],
+    tooltip: { trigger: "axis" },
+    legend: { top: 8, textStyle: { color: "#475569" } },
+    grid: { left: 40, right: 20, top: 40, bottom: 20 },
+    xAxis: {
+      type: "category",
+      data: metricTrendSeries.epochs,
+      axisLine: { lineStyle: { color: "rgba(30,58,138,0.18)" } },
+      axisLabel: { color: "#64748b" },
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: "#64748b" },
+      splitLine: { lineStyle: { color: "rgba(30,58,138,0.08)" } },
+    },
+    series: [
+      { name: "Recall@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.recall20 },
+      { name: "NDCG@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.ndcg20 },
+      { name: "Precision@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.precision20 },
+      { name: "MAP@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.map20 },
+    ],
+  });
+}
+
 function resize() {
   metricChart?.resize();
   hotChart?.resize();
+  trendChart?.resize();
 }
 
 onMounted(async () => {
@@ -245,8 +280,10 @@ onMounted(async () => {
   await nextTick();
   metricChart = metricRef.value ? echarts.init(metricRef.value) : null;
   hotChart = hotRef.value ? echarts.init(hotRef.value) : null;
+  trendChart = trendRef.value ? echarts.init(trendRef.value) : null;
   renderMetricChart();
   renderHotChart();
+  renderTrendChart();
   window.addEventListener("resize", resize);
 });
 
@@ -254,6 +291,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", resize);
   metricChart?.dispose();
   hotChart?.dispose();
+  trendChart?.dispose();
 });
 </script>
 
@@ -267,9 +305,18 @@ onBeforeUnmount(() => {
 }
 
 .results-page {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  align-items: center;
+  width: 100%;
   color: var(--text-primary);
+}
+.hero, .case-board, .path-board, .main-grid, .snapshot-grid, .chart-grid {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero,
@@ -359,8 +406,8 @@ onBeforeUnmount(() => {
 .snapshot-grid,
 .chart-grid,
 .path-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 24px;
 }
 
@@ -397,8 +444,9 @@ onBeforeUnmount(() => {
 }
 
 .chart {
-  height: 480px;
+  height: 420px;
   margin-top: 10px;
+  width: 100%;
 }
 
 .case-grid {

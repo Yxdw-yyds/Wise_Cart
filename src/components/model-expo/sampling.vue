@@ -4,20 +4,18 @@
       <div>
         <div class="eyebrow">课程负采样与排序</div>
         <h2>先用容易负样本稳定训练，再逐步切到更难的表示空间，最后交给 BPR 排序收敛</h2>
-        <p>
-          这一页严格对应 <code>get_curriculum_neg_sample()</code> 和 <code>sample_neg_items()</code>。
-          重点不是「有个课程学习思想」，而是明确你代码里到底怎么切阶段、怎么抽样、怎么过滤已交互项。
-        </p>
       </div>
     </section>
 
     <section class="chart-grid">
-      <article class="panel reveal-panel" style="overflow: hidden;">
-        <header class="section-head compact" style="position: relative; z-index: 10;">
-          <div>
-            <h3>特征空间采样轨迹 (CSS 3D 模拟)</h3>
-            <p>展示正样本 Anchor（红色）与各阶段抽取的负样本在三维潜空间中的分布变化。</p>
-          </div>
+      <article class="panel reveal-panel">
+        <header class="section-head compact" style="display: block; text-align: center; margin-bottom: 8px;">
+          <h3>
+            特征空间采样轨迹 ( 3D 模拟)
+            <span style="font-size: 14px; font-weight: normal; color: var(--text-tertiary); margin-left: 8px;">
+              — 展示正样本 Anchor (红色) 与各阶段抽取的负样本在三维潜空间中的分布变化
+            </span>
+          </h3>
         </header>
         <div class="css3d-container">
           <div class="css3d-scene">
@@ -35,15 +33,31 @@
       </article>
 
       <article class="panel reveal-panel">
-        <header class="section-head compact">
-          <div>
-            <h3>课程难度漏斗</h3>
-            <p>从易到难的训练台阶，直观看清负样本空间如何逐步逼近最终排序空间。</p>
-          </div>
+        <header class="section-head compact" style="display: block; text-align: center; margin-bottom: 8px;">
+          <h3>
+            课程难度漏斗
+            <span style="font-size: 14px; font-weight: normal; color: var(--text-tertiary); margin-left: 8px;">
+              — 从易到难的训练台阶，直观看清负样本空间如何逐步逼近最终排序空间
+            </span>
+          </h3>
         </header>
         <div ref="difficultyRef" class="chart"></div>
       </article>
+    </section>
 
+    <!-- 五阶段课程时间线 -->
+    <section class="stage-timeline reveal-panel">
+      <h3 class="timeline-title">五阶段课程切换时间线</h3>
+      <div class="timeline-track">
+        <div v-for="stage in trainingStages" :key="stage.key" class="stage-card"
+             :style="{ '--stage-color': stage.color }">
+          <div class="stage-badge" :style="{ background: stage.color }">{{ stage.stageName }}</div>
+          <div class="stage-epoch">{{ stage.epochRange }}</div>
+          <div class="stage-source"><code>{{ stage.embeddingSource }}</code></div>
+          <p class="stage-explain">{{ stage.explanation }}</p>
+          <div class="stage-trigger"><span>触发条件</span> {{ stage.triggerCondition }}</div>
+        </div>
+      </div>
     </section>
   </div>
 </template>
@@ -51,7 +65,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import * as echarts from "echarts";
-import { trainingStages } from "@/models/ccdrec/expo-data";
+import { trainingStages, lossTerms } from "@/models/ccdrec/expo-data";
 
 defineOptions({ name: "ModelExpoSampling" });
 
@@ -82,7 +96,7 @@ function renderDifficultyChart() {
       maxSize: "96%",
       sort: "ascending",
       gap: 4,
-      label: { color: "#475569", width: 190, overflow: "break" },
+      label: { color: "#475569" },
       itemStyle: { borderColor: "rgba(255,255,255,0.9)", borderWidth: 2 },
       data: trainingStages.map((item) => ({
         name: `${item.stageName} · ${item.embeddingSource}`,
@@ -119,13 +133,22 @@ onBeforeUnmount(() => {
 }
 
 .sampling-page {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  align-items: center;
   color: var(--text-primary);
+}
+.hero, .chart-grid, .stage-timeline {
+  width: 100%;
 }
 
 .hero,
-.panel {
+.panel,
+.stage-timeline,
+.loss-section {
   border: 1px solid var(--border-soft);
   background: var(--bg-elevated);
   box-shadow: var(--shadow-soft);
@@ -136,15 +159,21 @@ onBeforeUnmount(() => {
 }
 
 .hero,
-.panel {
+.panel,
+.stage-timeline,
+.loss-section {
   border-radius: 26px;
-  padding: 24px;
+  padding: 24px 20px;
 }
 
 .hero {
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
+}
+
+.expo-page {
+  padding: 0 4px;
 }
 
 .eyebrow {
@@ -156,7 +185,7 @@ onBeforeUnmount(() => {
 }
 
 .hero h2 {
-  margin: 10px 0 12px;
+  margin: 10px 0 0;
   font-size: 36px;
   line-height: 1.12;
   color: var(--text-primary);
@@ -171,8 +200,9 @@ onBeforeUnmount(() => {
 
 .chart-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+  width: 100%;
 }
 
 .section-head {
@@ -184,7 +214,13 @@ onBeforeUnmount(() => {
 .section-head h3 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 28px;
+  font-size: 20px;
+}
+
+.head-desc {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-tertiary);
 }
 
 .section-head.compact h3 {
@@ -196,30 +232,140 @@ onBeforeUnmount(() => {
   margin-top: 10px;
 }
 
-.loss-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  margin-top: 16px;
+/* ========== 五阶段时间线 ========== */
+.timeline-title,
+.loss-title {
+  margin: 0 0 18px;
+  font-size: 22px;
+  text-align: center;
+  color: var(--text-primary);
 }
 
-.loss-item {
-  padding: 22px;
-  border-radius: 20px;
+.timeline-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.stage-card {
+  position: relative;
+  padding: 18px 16px;
+  border-radius: 18px;
+  background: var(--bg-muted);
+  border: 1px solid color-mix(in srgb, var(--stage-color) 30%, var(--border-soft));
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stage-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--stage-color) 20%, transparent);
+}
+
+.stage-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.stage-epoch {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stage-source {
+  margin-top: 6px;
+}
+
+.stage-source code {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.05);
+  color: var(--text-secondary);
+}
+
+.stage-explain {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.stage-trigger {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  border-top: 1px dashed var(--border-soft);
+  padding-top: 8px;
+}
+
+.stage-trigger span {
+  font-weight: 600;
+  margin-right: 6px;
+  color: var(--text-secondary);
+}
+
+/* ========== 损失函数分解 ========== */
+.loss-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.loss-card {
+  padding: 18px;
+  border-radius: 18px;
   background: var(--bg-muted);
   border: 1px solid var(--border-soft);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.loss-item strong,
-.loss-item span,
-.loss-item em {
+.loss-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-soft);
+}
+
+.loss-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.loss-formula {
   display: block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.04);
+  font-size: 12px;
+  color: var(--accent-secondary, #6366f1);
+  word-break: break-all;
 }
 
-.loss-item strong { color: var(--text-primary); }
-.loss-item span { margin-top: 6px; color: #b45309; }
-.loss-item em { margin-top: 4px; color: var(--accent-secondary); font-style: normal; }
-.loss-item p { margin-top: 8px; line-height: 1.8; color: var(--text-secondary); }
+.loss-weight {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.loss-weight span {
+  font-weight: 600;
+  margin-right: 6px;
+  color: var(--text-secondary);
+}
+
+.loss-purpose {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
 
 @keyframes reveal-in {
   from { opacity: 0; transform: translateY(14px); }
@@ -228,6 +374,8 @@ onBeforeUnmount(() => {
 
 @media (max-width: 980px) {
   .chart-grid { grid-template-columns: 1fr; }
+  .timeline-track { grid-template-columns: repeat(2, 1fr); }
+  .loss-grid { grid-template-columns: repeat(2, 1fr); }
   .hero h2 { font-size: 28px; }
 }
 

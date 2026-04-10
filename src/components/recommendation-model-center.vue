@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="rmc-page workspace-stack">
     <el-card shadow="never" class="hero-card">
       <div class="header-row">
@@ -122,7 +122,7 @@ const resize = () => {
 };
 
 const goExpo = () => {
-  router.push("/model-expo/overview");
+  router.push("/model-expo");
 };
 
 onMounted(async () => {

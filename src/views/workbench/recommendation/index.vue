@@ -16,6 +16,7 @@
       </div>
     </div>
 
+    <div class="tab-scroll-area">
     <div v-show="activeTab === 'dashboard'" class="tab-content">
       <RecommendationDashboard />
     </div>
@@ -175,6 +176,7 @@
         </div>
       </el-card>
     </div>
+    </div><!-- end tab-scroll-area -->
   </div>
 </template>
 
@@ -183,7 +185,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { defineRouteMeta } from '@kesplus/kesplus';
 import { ElMessage } from 'element-plus';
 import * as echarts from 'echarts';
-import { useUserMallData } from '@/composables/useUserMallData';
+import { useTmallData } from '@/composables/useTmallData';
 import { useEnhancedRecommendation, getDashboardData } from '@/services/enhancedRecommendationComposer';
 import RecommendationDashboard from '@/components/RecommendationDashboard.vue';
 import BusinessFlowVisualization from '@/components/BusinessFlowVisualization.vue';
@@ -191,7 +193,7 @@ import BusinessFlowVisualization from '@/components/BusinessFlowVisualization.vu
 defineOptions({ name: '推荐系统工作台' });
 defineRouteMeta({ name: 'workbenchRecommendation', title: '推荐系统', icon: 'Promotion', isKeepAlive: true });
 
-const { products, behaviorLog, categoryLabels } = useUserMallData();
+const { products, behaviorLog, categoryLabels, loadAll: loadTmallData } = useTmallData();
 const { recommendations, analysis, loadRecommendations, updateAnalysis } = useEnhancedRecommendation();
 
 const activeTab = ref('dashboard');
@@ -314,6 +316,7 @@ watch(activeTab, async (v) => {
 });
 
 onMounted(async () => {
+  await loadTmallData();
   await refreshData();
   window.addEventListener('resize', onResize);
 });
@@ -329,14 +332,24 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0;
+  /* 覆盖 workspace-page 的滚动，让内部 tab-scroll-area 单独滚 */
+  overflow: hidden !important;
 }
 
 .tabs-header {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-  margin-bottom: 14px;
+  margin-bottom: 0;
   overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tab-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0 0;
 }
 
 .tabs { display: flex; }

@@ -7,10 +7,7 @@ export function defineAccessConfig(memo) {
   memo.ignoreAccess.push("/user-center");
   memo.ignoreAccess.push("/behavior-analysis");
   memo.ignoreAccess.push("/model-center");
-  memo.ignoreAccess.push("/model-expo/overview");
-  memo.ignoreAccess.push("/model-expo/diffusion");
-  memo.ignoreAccess.push("/model-expo/sampling");
-  memo.ignoreAccess.push("/model-expo/results");
+  memo.ignoreAccess.push("/model-expo");
   memo.ignoreAccess.push("/operations-decision");
   memo.ignoreAccess.push("/avatar");
   memo.ignoreAccess.push("/workbench/user-profile");
@@ -47,9 +44,6 @@ function ensureAdminBootstrap() {
     "workbench-root",
     "workbench-expo",
     "workbench-expo-overview",
-    "workbench-expo-diffusion",
-    "workbench-expo-sampling",
-    "workbench-expo-results",
     "workbench-overview",
     "workbench-behavior",
     "workbench-top50",
@@ -58,10 +52,7 @@ function ensureAdminBootstrap() {
     "workbench-algorithm-flow",
   ]);
   const staticWorkbenchUrls = new Set([
-    "/model-expo/overview",
-    "/model-expo/diffusion",
-    "/model-expo/sampling",
-    "/model-expo/results",
+    "/model-expo",
     "/home",
     "/behavior-analysis",
     "/behavior-top50",

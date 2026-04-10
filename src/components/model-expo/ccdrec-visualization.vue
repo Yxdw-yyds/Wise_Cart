@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="viz-page expo-scroll">
     <div class="gallery-container">
       <aside class="sidebar">
@@ -423,8 +423,11 @@
           :class="{ active: activeTab === 1 }"
           id="view-1"
         >
-          <div class="diagram-title">多模态输入与架构总览</div>
-          <svg viewBox="0 0 1500 500">
+          <div class="diagram-title" style="line-height: 1.4; margin-bottom: 16px;">
+            CCDRec 动态图解
+            <span style="display: block; font-size: 15px; color: #64748b; font-weight: 500; margin-top: 6px; letter-spacing: 0.05em;">多模态输入与架构总览</span>
+          </div>
+          <svg viewBox="0 0 1300 500">
             <rect
               x="280"
               y="40"
@@ -944,8 +947,11 @@
         >
           <div class="diagram-title"></div>
           <button @click="switchTab(1)" style="position: absolute; top: 20px; left: 20px; padding: 8px 16px; background: #e11d48; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; z-index: 10;">← 返回</button>
-          <div class="diagram-title">DMA (条件扩散) 内部微观机理</div>
-          <svg viewBox="0 0 1000 500">
+          <div class="diagram-title" style="line-height: 1.4; margin-bottom: 16px;">
+            CCDRec 动态图解
+            <span style="display: block; font-size: 15px; color: #64748b; font-weight: 500; margin-top: 6px; letter-spacing: 0.05em;">DMA (条件扩散) 内部微观机理</span>
+          </div>
+          <svg viewBox="100 0 800 500">
             <text
               x="500"
               y="40"
@@ -1076,7 +1082,7 @@
             </text>
             <rect
               x="360"
-              y="250"
+              y="225"
               width="70"
               height="30"
               class="physical-box"
@@ -1084,7 +1090,7 @@
             />
             <text
               x="395"
-              y="270"
+              y="245"
               class="txt-title"
             >
               Step t
@@ -1142,7 +1148,7 @@
             />
             <path
               id="v2-cs"
-              d="M 440 265 C 460 265, 460 300, 470 300"
+              d="M 430 240 C 450 240, 445 305, 470 305"
               class="path-line"
             />
             <path
@@ -1162,7 +1168,10 @@
         >
           <div class="diagram-title"></div>
           <button @click="switchTab(1)" style="position: absolute; top: 20px; left: 20px; padding: 8px 16px; background: #e11d48; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; z-index: 10;">← 返回</button>
-          <div class="diagram-title">基于扩散中间态的课程负采样</div>
+          <div class="diagram-title" style="line-height: 1.4; margin-bottom: 16px;">
+            CCDRec 动态图解
+            <span style="display: block; font-size: 15px; color: #64748b; font-weight: 500; margin-top: 6px; letter-spacing: 0.05em;">基于扩散中间态的课程负采样</span>
+          </div>
           <svg viewBox="0 0 1000 500">
             <text
               x="500"
@@ -1337,8 +1346,11 @@
         >
           <div class="diagram-title"></div>
           <button @click="switchTab(1)" style="position: absolute; top: 20px; left: 20px; padding: 8px 16px; background: #e11d48; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; z-index: 10;">← 返回</button>
-          <div class="diagram-title">双目标联合端到端优化</div>
-          <svg viewBox="0 0 1000 500">
+          <div class="diagram-title" style="line-height: 1.4; margin-bottom: 16px;">
+            CCDRec 动态图解
+            <span style="display: block; font-size: 15px; color: #64748b; font-weight: 500; margin-top: 6px; letter-spacing: 0.05em;">双目标联合端到端优化</span>
+          </div>
+          <svg viewBox="50 0 800 500">
             <g transform="translate(150, 60)">
               <rect
                 width="100"
@@ -1581,7 +1593,13 @@ function animateOnPath(svgIndex, pathId, color, duration = 2400) {
 
   const frame = (time) => {
     if (activeTab.value !== svgIndex || !particle.isConnected) return;
-    const progress = ((time - start) % duration) / duration;
+    const elapsed = time - start;
+    if (elapsed >= duration) {
+      particle.remove();
+      return;
+    }
+    
+    const progress = elapsed / duration;
     const point = pathEl.getPointAtLength(total * progress);
     particle.setAttribute("cx", String(point.x));
     particle.setAttribute("cy", String(point.y));

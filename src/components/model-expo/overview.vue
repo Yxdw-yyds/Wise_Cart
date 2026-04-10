@@ -1,14 +1,11 @@
 <template>
   <div          class="expo-page expo-scroll">
     <section class="hero-panel reveal-panel">
-      <div class="hero-copy">
-        <div class="eyebrow">技术文档</div>
-        <h2>CCDRec 推荐模型技术说明</h2>
-        <p>
-          这不是泛化的“多模态推荐概述”，而是严格对应你本地
-          <code>ccdrec.py</code> 和 <code>diffusion_ver15.py</code> 的答辩版海报页。
-          默认层先讲清算法为什么有效，展开层再对照代码位置、关键张量和训练/推理作用。
-        </p>
+      <div class="hero-top">
+        <div class="hero-copy">
+          <h2>CCDRec 推荐模型技术说明</h2>
+        </div>
+        
         <div class="hero-tags">
           <span>Item ID 是扩散主对象</span>
           <span>文本 / 图像 / timestep 是条件输入</span>
@@ -17,62 +14,25 @@
         </div>
       </div>
       <div class="hero-stats">
-        <div v-for="fact in summaryFacts" :key="fact.label" class="stat-tile"><span>{{ fact.label }}</span>
-          
+        <div v-for="fact in summaryFacts" :key="fact.label" class="stat-tile">
+          <span>{{ fact.label }}</span>
           <strong>{{ fact.value }}</strong>
         </div>
       </div>
     </section>
 
-    
-
-    <section class="card-grid">
-      
-    </section>
-
     <!-- 动态图解：CCDRec 实物级图解 -->
     <section class="viz-section reveal-panel">
-      <header class="section-head compact" style="margin-bottom:16px">
-        <div>
-          <h3>CCDRec 动态图解</h3>
-          <p>复刻论文原图风格，观察多模态特征向量的真实流动与演变。</p>
-        </div>
-      </header>
       <ModelExpoVisualization />
     </section>
 
-    <section class="notice-grid">
-      
-      
-    </section>
-
-    <section class="main-grid">
-      
-
-      
-    </section>
-
-    <section class="bottom-grid">
-      <article class="metric-card reveal-panel">
-        <header class="section-head compact">
-          <div>
-            <h3>离线指标趋势</h3>
-            <p>用真实指标文件恢复的趋势曲线，展示排序质量随 epoch 的变化。</p>
-          </div>
-        </header>
-        <div ref="metricRef" class="chart"></div>
-      </article>
-
-      
-    </section>
   </div>
 </template>
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
-import * as echarts from "echarts";
 import { loadDatasetSummary, loadOfflineMetrics } from "@/composables/useCcdrecData";
-import { lossTerms, metricTrendSeries, modelFlowNodes, overviewCards, posterSteps } from "@/models/ccdrec/expo-data";
+import { modelFlowNodes } from "@/models/ccdrec/expo-data";
 import ModelExpoVisualization from "@/components/model-expo/ccdrec-visualization.vue";
 
 defineOptions({ name: "ModelExpoOverview" });
@@ -80,8 +40,6 @@ defineOptions({ name: "ModelExpoOverview" });
 const activeKey = ref(modelFlowNodes[0].key);
 const summary = ref(null);
 const metrics = ref(null);
-const metricRef = ref(null);
-let metricChart = null;
 
 const activeNode = computed(() => modelFlowNodes.find((item) => item.key === activeKey.value) || modelFlowNodes[0]);
 
@@ -97,50 +55,10 @@ const summaryFacts = computed(() => {
   ];
 });
 
-function renderMetricChart() {
-  if (!metricChart) return;
-  metricChart.setOption({
-    backgroundColor: "transparent",
-    color: ["#3b82f6", "#16a34a", "#f59e0b", "#e11d48"],
-    tooltip: { trigger: "axis" },
-    legend: { top: 8, textStyle: { color: "#475569" } },
-    grid: { left: 36, right: 18, top: 52, bottom: 28 },
-    xAxis: {
-      type: "category",
-      data: metricTrendSeries.epochs,
-      axisLine: { lineStyle: { color: "rgba(30,58,138,0.18)" } },
-      axisLabel: { color: "#64748b" },
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { color: "#64748b" },
-      splitLine: { lineStyle: { color: "rgba(30,58,138,0.08)" } },
-    },
-    series: [
-      { name: "Recall@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.recall20 },
-      { name: "NDCG@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.ndcg20 },
-      { name: "Precision@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.precision20 },
-      { name: "MAP@20", type: "line", smooth: true, symbolSize: 7, data: metricTrendSeries.map20 },
-    ],
-  });
-}
-
-function resize() {
-  metricChart?.resize();
-}
-
 onMounted(async () => {
   [summary.value, metrics.value] = await Promise.all([loadDatasetSummary("baby"), loadOfflineMetrics("baby")]);
-  await nextTick();
-  metricChart = metricRef.value ? echarts.init(metricRef.value) : null;
-  renderMetricChart();
-  window.addEventListener("resize", resize);
 });
 
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", resize);
-  metricChart?.dispose();
-});
 </script>
 
 <style scoped>
@@ -153,10 +71,16 @@ onBeforeUnmount(() => {
 }
 
 .expo-page {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+  max-width: 1600px;
+  margin: 0 auto;
+  align-items: center;
+  width: 100%;
   color: var(--text-primary);
 }
+.hero-panel, .viz-section { width: 100%; box-sizing: border-box; }
 
 .hero-panel,
 .poster-panel,
@@ -164,7 +88,8 @@ onBeforeUnmount(() => {
 .detail-panel,
 .metric-card,
 .module-card,
-.notice-card {
+.notice-card,
+.viz-section {
   position: relative;
   border: 1px solid var(--border-soft);
   background: var(--bg-elevated);
@@ -176,18 +101,26 @@ onBeforeUnmount(() => {
 }
 
 .hero-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   padding: 26px;
   border-radius: 28px;
+}
+
+.hero-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 30px;
 }
 
 .poster-panel,
 .flow-board,
 .detail-panel,
 .metric-card,
-.notice-card {
+.notice-card,
+.viz-section {
   border-radius: 26px;
   padding: 22px;
 }
@@ -200,8 +133,8 @@ onBeforeUnmount(() => {
 }
 
 .hero-copy h2 {
-  margin: 10px 0 12px;
-  font-size: 40px;
+  margin: 0;
+  font-size: 34px;
   line-height: 1.08;
   color: var(--text-primary);
 }
@@ -216,15 +149,15 @@ onBeforeUnmount(() => {
 
 .hero-tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
-  margin-top: 18px;
 }
 
 .hero-tags span,
 .poster-node span,
 .notice-card span {
   display: inline-flex;
+  white-space: nowrap;
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
@@ -234,8 +167,8 @@ onBeforeUnmount(() => {
 
 .hero-stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .stat-tile {

@@ -1,0 +1,222 @@
+{
+  "audienceBuckets": {
+    "high": 77,
+    "mid": 96,
+    "low": 696,
+    "total": 869
+  },
+  "strategyReach": {
+    "recommend": 625,
+    "search": 391,
+    "push": 243
+  },
+  "hotRecommendedItems": [
+    {
+      "itemId": "3334626",
+      "count": 11008
+    },
+    {
+      "itemId": "5624541",
+      "count": 1528
+    },
+    {
+      "itemId": "2286740",
+      "count": 1378
+    },
+    {
+      "itemId": "975631",
+      "count": 1280
+    },
+    {
+      "itemId": "4753969",
+      "count": 1158
+    },
+    {
+      "itemId": "7258550",
+      "count": 1084
+    },
+    {
+      "itemId": "637369",
+      "count": 1056
+    },
+    {
+      "itemId": "3285039",
+      "count": 1032
+    },
+    {
+      "itemId": "2820133",
+      "count": 1017
+    },
+    {
+      "itemId": "6915182",
+      "count": 990
+    },
+    {
+      "itemId": "6309812",
+      "count": 880
+    },
+    {
+      "itemId": "2326727",
+      "count": 854
+    },
+    {
+      "itemId": "2435449",
+      "count": 796
+    },
+    {
+      "itemId": "6120670",
+      "count": 796
+    },
+    {
+      "itemId": "7469453",
+      "count": 794
+    },
+    {
+      "itemId": "7210784",
+      "count": 782
+    },
+    {
+      "itemId": "3708492",
+      "count": 768
+    },
+    {
+      "itemId": "4262166",
+      "count": 768
+    },
+    {
+      "itemId": "5322784",
+      "count": 748
+    },
+    {
+      "itemId": "1405481",
+      "count": 744
+    },
+    {
+      "itemId": "1134663",
+      "count": 708
+    },
+    {
+      "itemId": "2288751",
+      "count": 668
+    },
+    {
+      "itemId": "7096336",
+      "count": 653
+    },
+    {
+      "itemId": "3194235",
+      "count": 634
+    },
+    {
+      "itemId": "3819523",
+      "count": 632
+    },
+    {
+      "itemId": "6339771",
+      "count": 607
+    },
+    {
+      "itemId": "5024909",
+      "count": 584
+    },
+    {
+      "itemId": "6600929",
+      "count": 582
+    },
+    {
+      "itemId": "6411199",
+      "count": 572
+    },
+    {
+      "itemId": "437885",
+      "count": 557
+    },
+    {
+      "itemId": "50522",
+      "count": 552
+    },
+    {
+      "itemId": "344537",
+      "count": 531
+    },
+    {
+      "itemId": "368368",
+      "count": 522
+    },
+    {
+      "itemId": "2884036",
+      "count": 515
+    },
+    {
+      "itemId": "3670013",
+      "count": 514
+    },
+    {
+      "itemId": "3815716",
+      "count": 514
+    },
+    {
+      "itemId": "675219",
+      "count": 504
+    },
+    {
+      "itemId": "4599933",
+      "count": 482
+    },
+    {
+      "itemId": "6762259",
+      "count": 481
+    },
+    {
+      "itemId": "3505637",
+      "count": 478
+    },
+    {
+      "itemId": "5294904",
+      "count": 472
+    },
+    {
+      "itemId": "3188003",
+      "count": 464
+    },
+    {
+      "itemId": "6743488",
+      "count": 461
+    },
+    {
+      "itemId": "8038102",
+      "count": 454
+    },
+    {
+      "itemId": "8121419",
+      "count": 447
+    },
+    {
+      "itemId": "6312563",
+      "count": 446
+    },
+    {
+      "itemId": "3637882",
+      "count": 444
+    },
+    {
+      "itemId": "108674",
+      "count": 442
+    },
+    {
+      "itemId": "2086359",
+      "count": 442
+    },
+    {
+      "itemId": "6789821",
+      "count": 435
+    }
+  ],
+  "conversionFunnel": {
+    "view": 65921,
+    "click": 65921,
+    "fav": 1059,
+    "cart": 104,
+    "buy": 22
+  }
+}

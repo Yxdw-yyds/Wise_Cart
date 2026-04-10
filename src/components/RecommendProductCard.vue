@@ -1,6 +1,18 @@
 <template>
   <div class="rec-card" :class="{ interacted: lastAction }">
     <div class="card-rank">#{{ rank }}</div>
+    <!-- 商品图片（支持淘宝CDN回退） -->
+    <div class="card-img" :style="imgFallbackStyle">
+      <img
+        v-if="product?.pictUrl"
+        :src="product.pictUrl"
+        :alt="product?.name"
+        class="product-img"
+        @error="onImgError"
+        referrerpolicy="no-referrer"
+      />
+      <span v-else class="img-placeholder">{{ (product?.name || '商品')[0] }}</span>
+    </div>
     <div class="card-body">
       <div class="card-name">{{ product?.name || `商品 ${itemId}` }}</div>
       <div class="card-category">
@@ -44,6 +56,7 @@ const props = defineProps({
 
 const emit = defineEmits(['interact']);
 const lastAction = ref(null);
+const imgBroken = ref(false);
 
 const scoreColor = computed(() => {
   const s = props.fusedScore;
@@ -51,6 +64,18 @@ const scoreColor = computed(() => {
   if (s >= 0.5) return 'linear-gradient(90deg,#f59e0b,#fbbf24)';
   return 'linear-gradient(90deg,#ef4444,#f87171)';
 });
+
+const imgFallbackStyle = computed(() => {
+  if (!props.product?.pictUrl || imgBroken.value) {
+    return { background: props.product?.imgBg || 'linear-gradient(135deg, #667eea, #764ba2)' };
+  }
+  return {};
+});
+
+function onImgError(e) {
+  imgBroken.value = true;
+  e.target.style.display = 'none';
+}
 
 function interact(action) {
   lastAction.value = action;
@@ -91,6 +116,29 @@ function interact(action) {
   font-weight: 800;
   color: #94a3b8;
   letter-spacing: 0.5px;
+  z-index: 1;
+}
+
+.card-img {
+  width: 100%;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.img-placeholder {
+  font-size: 20px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 .card-body { display: flex; flex-direction: column; gap: 5px; }

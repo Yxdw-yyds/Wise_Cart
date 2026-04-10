@@ -4,26 +4,15 @@
       <div>
         <div class="eyebrow">条件扩散重建</div>
         <h2>扩散对象是 item_id_embedding，文本、图像和 timestep 只作为条件输入参与重建</h2>
-        <p>
-          这一页严格对应 <code>diffusion_ver15.py</code>。它不是泛称的“多模态对齐”，而是先对 item latent 加噪，
-          再把文本、图像和时间步嵌入一起送入 <code>selfAttention</code>，输出重建结果 <code>predicted_x</code>。
-        </p>
       </div>
-      <div class="hero-badges">
-        <span>q_sample 只加噪 item latent</span>
-        <span>selfAttention 做四路条件融合</span>
-        <span>sample() 同时产出多阶段 sample</span>
-      </div>
+
     </section>
 
     
 
     <section class="chart-panel reveal-panel">
-      <header class="section-head compact">
-        <div>
-          <h3>条件信号随 timestep 的重建轨迹</h3>
-          <p>图上不是抽象概念，而是“x_noisy 逐步退场，文本/图像条件和重建结果逐步接管”的叙事。</p>
-        </div>
+      <header class="section-head compact" style="justify-content: center; margin-bottom: 8px;">
+        <h3 style="text-align: center;">条件信号随 timestep 的重建轨迹</h3>
       </header>
       <div ref="fusionRef" class="chart"></div>
     </section>
@@ -111,9 +100,18 @@ onBeforeUnmount(() => {
 }
 
 .diffusion-page {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+  max-width: 1600px;
+  margin: 0 auto;
+  align-items: center;
+  width: 100%;
   color: var(--text-primary);
+}
+.hero, .chart-panel, .rail-panel, .code-board, .logic-grid, .formula-grid {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero,

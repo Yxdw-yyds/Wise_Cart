@@ -112,10 +112,6 @@ const { baseForm, formRules, loading, doLogin, ldap, error } = useLogin(formRef,
 const staticWorkbenchIds = new Set([
   "workbench-root",
   "workbench-expo",
-  "workbench-expo-overview",
-  "workbench-expo-diffusion",
-  "workbench-expo-sampling",
-  "workbench-expo-results",
   "workbench-overview",
   "workbench-behavior",
   "workbench-top50",
@@ -126,10 +122,7 @@ const staticWorkbenchIds = new Set([
 ]);
 
 const staticWorkbenchUrls = new Set([
-  "/model-expo/overview",
-  "/model-expo/diffusion",
-  "/model-expo/sampling",
-  "/model-expo/results",
+  "/model-expo",
   "/home",
   "/behavior-analysis",
   "/behavior-top50",

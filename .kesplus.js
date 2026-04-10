@@ -30,45 +30,19 @@ const buildConfig = {
         id: "workbench-root",
         name: "工作台",
         icon: "HomeFilled",
-        url: "/model-expo/overview",
+        url: "/home",
         children: [
-          {
-            id: "workbench-expo",
-            name: "推荐算法展厅",
-            icon: "Monitor",
-            url: "/model-expo/overview",
-            children: [
-              {
-                id: "workbench-expo-overview",
-                name: "算法总览",
-                icon: "DataBoard",
-                url: "/model-expo/overview",
-              },
-              {
-                id: "workbench-expo-diffusion",
-                name: "扩散对齐机制",
-                icon: "Connection",
-                url: "/model-expo/diffusion",
-              },
-              {
-                id: "workbench-expo-sampling",
-                name: "课程负采样与排序",
-                icon: "Histogram",
-                url: "/model-expo/sampling",
-              },
-              {
-                id: "workbench-expo-results",
-                name: "结果与案例",
-                icon: "Trophy",
-                url: "/model-expo/results",
-              },
-            ],
-          },
           {
             id: "workbench-overview",
             name: "首页总览驾驶舱",
             icon: "DataBoard",
             url: "/home",
+          },
+          {
+            id: "workbench-expo",
+            name: "推荐算法展厅",
+            icon: "Monitor",
+            url: "/model-expo",
           },
           {
             id: "workbench-behavior",
