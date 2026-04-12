@@ -57,12 +57,6 @@ const buildConfig = {
             url: "/behavior-top50",
           },
           {
-            id: "workbench-model",
-            name: "推荐与模型分析",
-            icon: "TrendCharts",
-            url: "/model-center",
-          },
-          {
             id: "workbench-ops",
             name: "运营决策",
             icon: "Operation",

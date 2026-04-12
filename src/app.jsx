@@ -6,7 +6,6 @@ export function defineAccessConfig(memo) {
   memo.ignoreAccess.push("/user-info");
   memo.ignoreAccess.push("/user-center");
   memo.ignoreAccess.push("/behavior-analysis");
-  memo.ignoreAccess.push("/model-center");
   memo.ignoreAccess.push("/model-expo");
   memo.ignoreAccess.push("/operations-decision");
   memo.ignoreAccess.push("/avatar");
@@ -26,7 +25,6 @@ export default defineRuntimeConfig({});
 const ADMIN_ROUTES = [
   "/home",
   "/behavior-analysis",
-  "/model-center",
   "/operations-decision",
   "/avatar",
   "/user-info",
@@ -47,7 +45,6 @@ function ensureAdminBootstrap() {
     "workbench-overview",
     "workbench-behavior",
     "workbench-top50",
-    "workbench-model",
     "workbench-ops",
     "workbench-algorithm-flow",
   ]);
@@ -56,7 +53,6 @@ function ensureAdminBootstrap() {
     "/home",
     "/behavior-analysis",
     "/behavior-top50",
-    "/model-center",
     "/operations-decision",
     "/workbench/algorithm-flow",
   ]);

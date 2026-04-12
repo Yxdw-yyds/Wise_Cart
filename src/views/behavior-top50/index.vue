@@ -41,7 +41,23 @@
           :class="getRankClass(rec.rank)"
         >
           <div class="rank-badge">{{ rec.rank }}</div>
-          <div class="item-id">{{ rec.itemId }}</div>
+          <div class="product-content-scroll">
+            <div v-if="rec.pictUrl" class="image-wrapper">
+              <img 
+                :src="rec.pictUrl" 
+                :alt="rec.name"
+                class="product-image"
+                @error="handleImageError"
+                @load="handleImageLoad"
+              />
+            </div>
+            <div v-else class="image-placeholder">无图片</div>
+            <div class="item-id">{{ rec.itemId }}</div>
+            <div class="product-name-scroll">
+              <div class="product-name">{{ rec.name }}</div>
+            </div>
+            <div class="product-price">¥{{ rec.price }}</div>
+          </div>
         </div>
       </div>
     </el-card>
@@ -51,7 +67,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { defineRouteMeta } from "@kesplus/kesplus";
-import { loadUserTopK } from "@/composables/useCcdrecData";
+import { loadUserTopK, loadUserRecommendationWithImages } from "@/composables/useCcdrecData";
 
 defineOptions({ name: "推荐前50查询页面" });
 
@@ -66,9 +82,7 @@ const userId = ref("0");
 const userIdOptions = ref([]);
 const userRecs = ref([]);
 
-const userRecRows = computed(() =>
-  userRecs.value.map((itemId, idx) => ({ rank: idx + 1, itemId }))
-);
+const userRecRows = computed(() => userRecs.value);
 
 const getRankClass = (rank) => {
   if (rank === 1) return "rank-gold";
@@ -77,8 +91,29 @@ const getRankClass = (rank) => {
   return "";
 };
 
+const handleImageError = (e) => {
+  // 图片加载失败时，隐藏图片元素并显示占位符
+  e.target.style.display = "none";
+  const wrapper = e.target.parentElement;
+  if (wrapper) {
+    const placeholder = document.createElement("div");
+    placeholder.className = "image-placeholder";
+    placeholder.textContent = "图片加载失败";
+    wrapper.appendChild(placeholder);
+  }
+};
+
+const handleImageLoad = (e) => {
+  // 图片加载成功，隐藏占位符
+  const wrapper = e.target.parentElement;
+  if (wrapper) {
+    const placeholders = wrapper.querySelectorAll(".image-placeholder");
+    placeholders.forEach((p) => p.style.display = "none");
+  }
+};
+
 const loadUserRecs = async () => {
-  userRecs.value = await loadUserTopK("baby", userId.value);
+  userRecs.value = await loadUserRecommendationWithImages("baby", userId.value);
 };
 
 onMounted(async () => {
@@ -120,7 +155,7 @@ onMounted(async () => {
 
 .rec-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
 }
 
@@ -128,15 +163,18 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
-  padding: 20px 12px;
+  padding: 12px;
   border-radius: 12px;
   background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
   border: none;
   color: #303133;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
+  cursor: pointer;
+  overflow: hidden;
+  min-height: 300px;
+  max-height: 320px;
 }
 
 .rec-card:hover {
@@ -156,6 +194,37 @@ onMounted(async () => {
   color: #fff;
   background: linear-gradient(135deg, #667eea, #764ba2);
   flex-shrink: 0;
+  z-index: 2;
+}
+
+.product-content-scroll {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.product-content-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.product-content-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.product-content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.product-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .rank-gold .rank-badge {
@@ -171,10 +240,62 @@ onMounted(async () => {
   background: linear-gradient(135deg, #e6a756, #c4722a);
 }
 
+.product-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f5f5f5;
+  display: block;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.image-placeholder {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 12px;
+}
+
 .item-id {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
+  color: #666;
+  text-align: center;
+}
+
+.product-name-scroll {
+  width: 100%;
+  max-height: 60px;
+  overflow: hidden;
+  padding: 0 2px;
+}
+
+.product-name {
+  font-size: 12px;
   color: #303133;
-  letter-spacing: 0.5px;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.product-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e4393c;
 }
 </style>
