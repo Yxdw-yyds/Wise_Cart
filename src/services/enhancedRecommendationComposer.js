@@ -202,17 +202,18 @@ export function useEnhancedRecommendation() {
   const analysis = ref(null);
 
   const loadRecommendations = async (params = {}) => {
-    loading.value = true;
+    const { silent = false, ...requestParams } = params;
+    if (!silent) loading.value = true;
     error.value = '';
     try {
-      const result = await fetchEnhancedRecommendations(params);
+      const result = await fetchEnhancedRecommendations(requestParams);
       recommendations.value = result.recommendations || [];
       return result;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
       throw e;
     } finally {
-      loading.value = false;
+      if (!silent) loading.value = false;
     }
   };
 

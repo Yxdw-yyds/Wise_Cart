@@ -90,13 +90,14 @@ function interact(action) {
   background: #fff;
   border-radius: 12px;
   border: 1.5px solid #e2e8f0;
-  padding: 12px 10px 10px;
+  padding: 9px 8px 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   transition: all 0.22s ease;
   cursor: default;
   overflow: hidden;
+  min-height: 288px;
 }
 .rec-card:hover {
   border-color: #a5b4fc;
@@ -110,9 +111,9 @@ function interact(action) {
 
 .card-rank {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 10px;
+  top: 6px;
+  right: 8px;
+  font-size: 9px;
   font-weight: 800;
   color: #94a3b8;
   letter-spacing: 0.5px;
@@ -121,18 +122,21 @@ function interact(action) {
 
 .card-img {
   width: 100%;
-  height: 60px;
+  height: 176px;
   border-radius: 8px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: #f8fafc;
 }
 .product-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  transform: scale(1);
+  transform-origin: center;
 }
 .img-placeholder {
   font-size: 20px;
@@ -141,13 +145,13 @@ function interact(action) {
   text-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
-.card-body { display: flex; flex-direction: column; gap: 5px; }
+.card-body { display: flex; flex-direction: column; gap: 3px; }
 
 .card-name {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #1e293b;
-  line-height: 1.3;
+  line-height: 1.2;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -155,38 +159,38 @@ function interact(action) {
 }
 
 .cat-tag {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: #ede9fe;
   color: #6d28d9;
 }
 
-.card-price { display: flex; align-items: baseline; gap: 6px; }
-.price-now  { font-size: 14px; font-weight: 800; color: #ef4444; }
-.price-ori  { font-size: 11px; color: #94a3b8; text-decoration: line-through; }
+.card-price { display: flex; align-items: baseline; gap: 5px; }
+.price-now  { font-size: 12px; font-weight: 800; color: #ef4444; }
+.price-ori  { font-size: 10px; color: #94a3b8; text-decoration: line-through; }
 
 .card-reason {
-  font-size: 10px;
+  font-size: 9px;
   color: #64748b;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
-  line-height: 1.4;
+  line-height: 1.25;
 }
 
-.card-score { display: flex; align-items: center; gap: 6px; }
-.score-bar-wrap { flex:1; height: 5px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+.card-score { display: flex; align-items: center; gap: 5px; }
+.score-bar-wrap { flex:1; height: 4px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
 .score-bar { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
-.score-num { font-size: 11px; font-weight: 700; color: #1e293b; min-width: 22px; text-align: right; }
+.score-num { font-size: 10px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: right; }
 
-.card-models { display: flex; flex-wrap: wrap; gap: 4px; }
+.card-models { display: flex; flex-wrap: wrap; gap: 3px; }
 .model-chip {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 999px;
   letter-spacing: 0.3px;
 }
@@ -196,16 +200,17 @@ function interact(action) {
 
 .card-actions {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   justify-content: flex-end;
   padding-top: 6px;
+  margin-top: auto;
   border-top: 1px solid #f1f5f9;
 }
 .act-btn {
-  font-size: 13px;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  font-size: 11px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   border: 1.5px solid #e2e8f0;
   background: #f8fafc;
   cursor: pointer;

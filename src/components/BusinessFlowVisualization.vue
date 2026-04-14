@@ -10,7 +10,7 @@
         <div class="item"><span>购买</span><span>{{ behaviorStats.buy || 0 }}</span></div>
       </div></div>
       <div class="arrow">→</div>
-      <div class="stage"><div class="icon">🎯</div><div class="title">兴趣向量</div><div class="content">
+      <div class="stage stage-interest"><div class="icon">🎯</div><div class="title">兴趣向量</div><div class="content content-interest">
         <div v-for="item in topInterests" :key="item.key" class="interest">
           <div>{{ categoryLabels[item.key] || item.key }}</div><div class="bar"><div class="fill" :style="{ width: item.pct + '%', backgroundColor: getCategoryColor(item.key) }"></div></div>
           <div>{{ item.pct }}%</div>
@@ -46,11 +46,36 @@
         </div>
         <div class="card"><h3>转化漏斗</h3>
           <div class="funnel">
-            <div class="fitem"><div>浏览</div><div class="fbar" style="width: 100%"><span>{{ conversionFunnel.view }}</span></div></div>
-            <div class="fitem"><div>点击</div><div class="fbar" :style="{ width: conversionFunnel.viewToClick + '%' }"><span>{{ conversionFunnel.viewToClick.toFixed(1) }}%</span></div></div>
-            <div class="fitem"><div>收藏</div><div class="fbar" :style="{ width: conversionFunnel.clickToFav + '%' }"><span>{{ conversionFunnel.clickToFav.toFixed(1) }}%</span></div></div>
-            <div class="fitem"><div>购物车</div><div class="fbar" :style="{ width: conversionFunnel.favToCart + '%' }"><span>{{ conversionFunnel.favToCart.toFixed(1) }}%</span></div></div>
-            <div class="fitem"><div>购买</div><div class="fbar" :style="{ width: conversionFunnel.cartToBuy + '%' }"><span>{{ conversionFunnel.cartToBuy.toFixed(1) }}%</span></div></div>
+            <div class="fstage fstage-view">
+              <div class="fshape">
+                <span>浏览</span>
+                <strong>{{ conversionFunnel.view }}</strong>
+              </div>
+            </div>
+            <div class="fstage fstage-click">
+              <div class="fshape">
+                <span>点击</span>
+                <strong>{{ conversionFunnel.viewToClick.toFixed(1) }}%</strong>
+              </div>
+            </div>
+            <div class="fstage fstage-fav">
+              <div class="fshape">
+                <span>收藏</span>
+                <strong>{{ conversionFunnel.clickToFav.toFixed(1) }}%</strong>
+              </div>
+            </div>
+            <div class="fstage fstage-cart">
+              <div class="fshape">
+                <span>购物车</span>
+                <strong>{{ conversionFunnel.favToCart.toFixed(1) }}%</strong>
+              </div>
+            </div>
+            <div class="fstage fstage-buy">
+              <div class="fshape">
+                <span>购买</span>
+                <strong>{{ conversionFunnel.cartToBuy.toFixed(1) }}%</strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -131,45 +156,61 @@ onMounted(async () => {
 .header p { font-size: 16px; opacity: 0.9; }
 .flow { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; overflow-x: auto; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 16px; backdrop-filter: blur(10px); }
 .stage { flex-shrink: 0; width: 200px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); transition: all 0.3s; }
+.stage-interest { width: 280px; }
 .stage:hover { transform: translateY(-8px); box-shadow: 0 12px 32px rgba(0,0,0,0.16); }
 .icon { font-size: 32px; margin-bottom: 12px; }
 .title { font-size: 14px; font-weight: 700; color: #2c3e50; margin-bottom: 12px; }
 .content { display: flex; flex-direction: column; gap: 8px; }
+.content-interest { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
 .item { display: flex; justify-content: space-between; font-size: 12px; }
 .item span:first-child { color: #7f8c8d; }
 .item span:last-child { font-weight: 700; color: #e74c3c; }
 .interest { display: flex; flex-direction: column; gap: 4px; font-size: 11px; }
 .interest div:first-child { color: #7f8c8d; font-weight: 500; }
-.bar { height: 16px; background: #ecf0f1; border-radius: 8px; overflow: hidden; }
+.bar { height: 12px; background: #ecf0f1; border-radius: 8px; overflow: hidden; }
 .fill { height: 100%; transition: width 0.3s; }
 .interest div:last-child { color: #2c3e50; font-weight: 600; }
 .model { padding: 8px; background: #f8f9fa; border-radius: 6px; }
 .model div:first-child { font-size: 12px; font-weight: 600; color: #2c3e50; }
 .model div:last-child { font-size: 11px; color: #95a5a6; margin-top: 2px; }
 .arrow { flex-shrink: 0; font-size: 24px; color: white; font-weight: 700; }
-.details { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
-.card { background: #f8f9fa; border-radius: 12px; padding: 24px; }
-.card h3 { font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 16px; border-bottom: 2px solid #ecf0f1; padding-bottom: 12px; }
-.table { display: flex; flex-direction: column; gap: 8px; }
-.thead { display: grid; grid-template-columns: 40px 1fr 80px 100px; gap: 12px; padding: 12px; background: white; border-radius: 8px; font-weight: 700; font-size: 12px; color: #7f8c8d; }
-.tr { display: grid; grid-template-columns: 40px 1fr 80px 100px; gap: 12px; padding: 12px; background: white; border-radius: 8px; align-items: center; font-size: 12px; transition: all 0.2s; }
+.details { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+.grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 20px; margin-bottom: 20px; align-items: start; }
+.card { background: #f8f9fa; border-radius: 12px; padding: 18px; }
+.card h3 { font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 12px; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+.table { display: flex; flex-direction: column; gap: 6px; }
+.thead { display: grid; grid-template-columns: 40px minmax(0, 1fr) 88px 132px; gap: 10px; padding: 10px 12px; background: white; border-radius: 8px; font-weight: 700; font-size: 12px; color: #7f8c8d; }
+.tr { display: grid; grid-template-columns: 40px minmax(0, 1fr) 88px 132px; gap: 10px; padding: 10px 12px; background: white; border-radius: 8px; align-items: center; font-size: 12px; transition: all 0.2s; }
 .tr:hover { background: #ecf0f1; }
 .tr div:first-child { font-weight: 700; color: #667eea; }
 .tr div:nth-child(2) { color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 700; }
 .tag { background: #e8f4f8; color: #3498db; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 4px; }
-.funnel { display: flex; flex-direction: column; gap: 12px; }
-.fitem { display: flex; align-items: center; gap: 12px; }
-.fitem div:first-child { width: 60px; font-size: 12px; font-weight: 600; color: #2c3e50; }
-.fbar { flex: 1; height: 32px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; min-width: 60px; transition: all 0.3s; }
-.fbar span { color: white; font-weight: 700; font-size: 12px; }
-.metrics h3 { font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 16px; border-bottom: 2px solid #ecf0f1; padding-bottom: 12px; }
-.mgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-.mbox { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 20px; color: white; text-align: center; transition: all 0.3s; }
+.funnel { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px 0 4px; }
+.fstage { width: 100%; display: flex; justify-content: center; }
+.fshape {
+  height: 48px;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 6% 100%);
+}
+.fshape span { font-size: 12px; font-weight: 700; letter-spacing: 0.2px; }
+.fshape strong { font-size: 14px; font-weight: 800; }
+.fstage-view .fshape { width: 96%; background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%); }
+.fstage-click .fshape { width: 82%; background: linear-gradient(90deg, #c7f9e5 0%, #9ee6cf 100%); }
+.fstage-fav .fshape { width: 68%; background: linear-gradient(90deg, #fde68a 0%, #fcd34d 100%); }
+.fstage-cart .fshape { width: 54%; background: linear-gradient(90deg, #fdba74 0%, #fb923c 100%); }
+.fstage-buy .fshape { width: 40%; background: linear-gradient(90deg, #fca5a5 0%, #f87171 100%); }
+.metrics h3 { font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 12px; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+.mgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.mbox { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 16px 14px; color: white; text-align: center; transition: all 0.3s; }
 .mbox:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(102,126,234,0.3); }
-.mbox div:first-child { font-size: 12px; opacity: 0.9; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-.val { font-size: 28px; font-weight: 800; }
-@media (max-width: 1200px) { .grid { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .biz-flow { padding: 16px; } .header h2 { font-size: 24px; } .mgrid { grid-template-columns: 1fr; } }
+.mbox div:first-child { font-size: 12px; opacity: 0.9; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.val { font-size: 24px; font-weight: 800; line-height: 1.1; }
+@media (max-width: 1200px) { .grid { grid-template-columns: 1fr; } .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .biz-flow { padding: 16px; } .header h2 { font-size: 24px; } .mgrid { grid-template-columns: 1fr; } .stage-interest { width: 220px; } .content-interest { grid-template-columns: 1fr; } .details { padding: 16px; } .card { padding: 14px; } .thead, .tr { grid-template-columns: 32px minmax(0, 1fr) 72px 92px; gap: 8px; padding: 8px 10px; } .fshape { height: 42px; padding: 0 12px; } .fshape span { font-size: 11px; } .fshape strong { font-size: 12px; } }
 </style>

@@ -1,4 +1,4 @@
-﻿import { computed, ref } from "vue";
+import { computed, ref } from "vue";
 
 const cache = {
   manifest: null,
@@ -40,6 +40,10 @@ async function getProductMap() {
 
 export async function loadCcdrecManifest() {
   return loadJson("manifest");
+}
+
+export async function loadAllTmallProducts() {
+  return loadJson("tmallProducts");
 }
 
 export async function loadDatasetSummary(dataset = "baby") {
@@ -111,6 +115,26 @@ export async function loadUserRecommendationWithImages(dataset = "baby", userId)
 export async function loadOpsAnalytics(dataset = "baby", filters = {}) {
   if (dataset !== "baby") throw new Error("Only baby dataset is supported in v1");
   const ops = await loadJson("ops");
+  const pMap = await getProductMap();
+
+  // Enrich hot items with product details
+  if (ops.hotRecommendedItems && pMap) {
+    ops.hotRecommendedItems = ops.hotRecommendedItems.map((item) => {
+      const numId = parseInt(item.itemId);
+      const mappedId = numId % 2000 === 0 ? 2000 : numId % 2000;
+      const product = pMap[mappedId] || {};
+      let pictUrl = product.pictUrl || "";
+      if (pictUrl) pictUrl = pictUrl.trim().replace(/\s+/g, "");
+      return {
+        ...item,
+        name: product.name || `商品 ${item.itemId}`,
+        pictUrl,
+        category: product.category || "",
+        price: product.price || 0,
+        shop: product.shop || "",
+      };
+    });
+  }
 
   if (!filters || !filters.activeLevel) return ops;
 

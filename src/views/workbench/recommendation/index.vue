@@ -72,7 +72,7 @@
           <template #header>
             <div class="ab-card-head">
               <span>A/B 方案对比（离线基准）</span>
-              <el-button size="small" type="primary" plain @click="runABTest">运行对比</el-button>
+              <el-button size="small" type="primary" plain :loading="abRunning" @click="runABTest">运行对比</el-button>
             </div>
           </template>
           <div class="ab-variants">
@@ -95,9 +95,11 @@
                 </div>
               </div>
               <div class="variant-metrics">
-                <div class="vm-item"><span>预估 CTR</span><strong>{{ variant.estCtr }}</strong></div>
-                <div class="vm-item"><span>预估 CVR</span><strong>{{ variant.estCvr }}</strong></div>
-                <div class="vm-item"><span>覆盖率</span><strong>{{ variant.coverage }}</strong></div>
+                <div class="vm-item"><span>重合度</span><strong>{{ variant.overlap }}</strong></div>
+                <div class="vm-item"><span>多样性</span><strong>{{ variant.diversity }}</strong></div>
+                <div class="vm-item"><span>新品率</span><strong>{{ variant.novelty }}</strong></div>
+                <div class="vm-item"><span>平均排序分</span><strong>{{ variant.avgScore }}</strong></div>
+                <div class="vm-item"><span>类目覆盖数</span><strong>{{ variant.categoryCoverage }}</strong></div>
               </div>
             </div>
           </div>
@@ -187,6 +189,7 @@ import { ElMessage } from 'element-plus';
 import * as echarts from 'echarts';
 import { useTmallData } from '@/composables/useTmallData';
 import { useEnhancedRecommendation, getDashboardData } from '@/services/enhancedRecommendationComposer';
+import { getEnhancedRecommendations } from '@/services/recommendationService';
 import RecommendationDashboard from '@/components/RecommendationDashboard.vue';
 import BusinessFlowVisualization from '@/components/BusinessFlowVisualization.vue';
 
@@ -200,6 +203,7 @@ const activeTab = ref('dashboard');
 const conversionFunnelData = ref({ view: 0, viewToClick: 0, clickToFav: 0, favToCart: 0, cartToBuy: 0 });
 const abResult = ref(null);
 const selectedVariant = ref('control');
+const abRunning = ref(false);
 const pieRef = ref(null);
 let pieChart = null;
 
@@ -228,19 +232,158 @@ function applyWeights() {
   ElMessage.success('权重配置已应用（演示环境）');
 }
 
-const abVariants = [
-  { id: 'control',   name: '对照组（当前）',      tag: 'Control',   tagType: '',        weights: { ccdrec: 60, collaborative: 25, content: 15 }, estCtr: '6.2%', estCvr: '2.1%', coverage: '100%' },
-  { id: 'variant_a', name: '方案A（强化深度学习）', tag: 'Variant A', tagType: 'success', weights: { ccdrec: 75, collaborative: 15, content: 10 }, estCtr: '7.1%', estCvr: '2.4%', coverage: '98%'  },
-  { id: 'variant_b', name: '方案B（均衡策略）',    tag: 'Variant B', tagType: 'warning', weights: { ccdrec: 45, collaborative: 35, content: 20 }, estCtr: '5.8%', estCvr: '2.0%', coverage: '100%' },
+const abVariantDefs = [
+  { id: 'control',   shortName: '对照组', name: '对照组（当前）',      tag: 'Control',   tagType: '',        weights: { ccdrec: 60, collaborative: 25, content: 15 } },
+  { id: 'variant_a', shortName: '方案A',  name: '方案A（强化深度学习）', tag: 'Variant A', tagType: 'success', weights: { ccdrec: 75, collaborative: 15, content: 10 } },
+  { id: 'variant_b', shortName: '方案B',  name: '方案B（均衡策略）',    tag: 'Variant B', tagType: 'warning', weights: { ccdrec: 45, collaborative: 35, content: 20 } },
 ];
 
-function runABTest() {
-  abResult.value = [
-    { label: '预估点击率', bars: [{ name: '对照组', val: '6.2%', pct: 62, color: '#295bff' }, { name: '方案A', val: '7.1%', pct: 71, color: '#10b981' }, { name: '方案B', val: '5.8%', pct: 58, color: '#f59e0b' }] },
-    { label: '预估转化率', bars: [{ name: '对照组', val: '2.1%', pct: 42, color: '#295bff' }, { name: '方案A', val: '2.4%', pct: 48, color: '#10b981' }, { name: '方案B', val: '2.0%', pct: 40, color: '#f59e0b' }] },
-    { label: '推荐覆盖率', bars: [{ name: '对照组', val: '100%', pct: 100, color: '#295bff' }, { name: '方案A', val: '98%', pct: 98, color: '#10b981' }, { name: '方案B', val: '100%', pct: 100, color: '#f59e0b' }] },
-  ];
-  ElMessage.success('A/B 对比分析完成');
+const abVariantMetrics = ref({});
+
+const abVariants = computed(() =>
+  abVariantDefs.map((variant) => {
+    const metrics = abVariantMetrics.value[variant.id];
+    return {
+      ...variant,
+      overlap: metrics?.overlap || '--',
+      diversity: metrics?.diversity || '--',
+      novelty: metrics?.novelty || '--',
+      avgScore: metrics?.avgScore || '--',
+      categoryCoverage: metrics?.categoryCoverage || '--',
+    };
+  })
+);
+
+function formatPercent(value) {
+  return `${Number(value).toFixed(1)}%`;
+}
+
+function buildOfflineMetrics(result, allProducts) {
+  const items = result.recommendations || [];
+  const uniqueCategories = new Set(items.map((item) => item.product?.category).filter(Boolean));
+  const noveltyRate = items.length
+    ? items.filter((item) => (item.product?.tags || []).includes('新品')).length / items.length * 100
+    : 0;
+  const diversity = items.length ? uniqueCategories.size / items.length * 100 : 0;
+  const avgScore = items.length
+    ? items.reduce((sum, item) => sum + (item.fusedScore || 0), 0) / items.length
+    : 0;
+
+  return {
+    overlap: '--',
+    diversity: formatPercent(Math.min(diversity, 100)),
+    novelty: formatPercent(Math.min(noveltyRate, 100)),
+    avgScore: avgScore.toFixed(2),
+    categoryCoverage: `${uniqueCategories.size}`,
+    rawOverlap: 0,
+    rawDiversity: Math.min(diversity, 100),
+    rawNovelty: Math.min(noveltyRate, 100),
+    rawAvgScore: Math.min(avgScore * 100, 100),
+    rawCategoryCoverage: uniqueCategories.size,
+    itemIds: items.map((item) => item.itemId),
+  };
+}
+
+async function runABTest() {
+  if (!products.value.length) return;
+
+  abRunning.value = true;
+  try {
+    const variantResults = await Promise.all(
+      abVariantDefs.map(async (variant) => {
+        const result = await getEnhancedRecommendations({
+          userId: 'user_001',
+          topK: 15,
+          userBehavior: behaviorLog.value,
+          allProducts: products.value,
+          useCache: false,
+          modelWeights: variant.weights,
+        });
+
+        return {
+          ...variant,
+          metrics: buildOfflineMetrics(result, products.value),
+        };
+      })
+    );
+
+    abVariantMetrics.value = Object.fromEntries(
+      variantResults.map((variant) => [variant.id, variant.metrics])
+    );
+
+    const controlSet = new Set(variantResults.find((variant) => variant.id === 'control')?.metrics.itemIds || []);
+    variantResults.forEach((variant) => {
+      const overlapPct = variant.metrics.itemIds.length
+        ? variant.metrics.itemIds.filter((itemId) => controlSet.has(itemId)).length / variant.metrics.itemIds.length * 100
+        : 0;
+      variant.metrics.overlap = formatPercent(overlapPct);
+      variant.metrics.rawOverlap = Math.min(overlapPct, 100);
+    });
+
+    abResult.value = [
+      {
+        label: '重合度',
+        bars: variantResults.map((variant) => ({
+          name: variant.shortName,
+          val: variant.metrics.overlap,
+          pct: variant.metrics.rawOverlap,
+          color: modelColors[
+            variant.id === 'control' ? 'ccdrec' : variant.id === 'variant_a' ? 'collaborative' : 'content'
+          ],
+        })),
+      },
+      {
+        label: '多样性',
+        bars: variantResults.map((variant) => ({
+          name: variant.shortName,
+          val: variant.metrics.diversity,
+          pct: variant.metrics.rawDiversity,
+          color: modelColors[
+            variant.id === 'control' ? 'ccdrec' : variant.id === 'variant_a' ? 'collaborative' : 'content'
+          ],
+        })),
+      },
+      {
+        label: '新品率',
+        bars: variantResults.map((variant) => ({
+          name: variant.shortName,
+          val: variant.metrics.novelty,
+          pct: variant.metrics.rawNovelty,
+          color: modelColors[
+            variant.id === 'control' ? 'ccdrec' : variant.id === 'variant_a' ? 'collaborative' : 'content'
+          ],
+        })),
+      },
+      {
+        label: '平均排序分',
+        bars: variantResults.map((variant) => ({
+          name: variant.shortName,
+          val: variant.metrics.avgScore,
+          pct: variant.metrics.rawAvgScore,
+          color: modelColors[
+            variant.id === 'control' ? 'ccdrec' : variant.id === 'variant_a' ? 'collaborative' : 'content'
+          ],
+        })),
+      },
+      {
+        label: '类目覆盖数',
+        bars: variantResults.map((variant) => ({
+          name: variant.shortName,
+          val: variant.metrics.categoryCoverage,
+          pct: Math.min(variant.metrics.rawCategoryCoverage * 12, 100),
+          color: modelColors[
+            variant.id === 'control' ? 'ccdrec' : variant.id === 'variant_a' ? 'collaborative' : 'content'
+          ],
+        })),
+      },
+    ];
+
+    ElMessage.success('A/B 对比分析完成');
+  } catch (error) {
+    ElMessage.error(`A/B 对比失败：${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    abRunning.value = false;
+  }
 }
 
 const detailStats = computed(() => [
@@ -318,6 +461,7 @@ watch(activeTab, async (v) => {
 onMounted(async () => {
   await loadTmallData();
   await refreshData();
+  await runABTest();
   window.addEventListener('resize', onResize);
 });
 
@@ -421,7 +565,7 @@ onBeforeUnmount(() => {
 .vw-bar-wrap { flex: 1; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
 .vw-bar      { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
 .vw-item span:last-child { width: 30px; text-align: right; font-weight: 700; color: #1e293b; }
-.variant-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.variant-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .vm-item { background: #f8fafc; border-radius: 8px; padding: 6px 8px; text-align: center; }
 .vm-item span   { display: block; font-size: 10px; color: #94a3b8; margin-bottom: 2px; }
 .vm-item strong { font-size: 14px; font-weight: 800; color: #1e293b; }

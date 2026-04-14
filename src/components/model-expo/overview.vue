@@ -103,8 +103,8 @@ onMounted(async () => {
 .hero-panel {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 26px;
+  gap: 16px;
+  padding: 20px 24px;
   border-radius: 28px;
 }
 
@@ -112,7 +112,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 30px;
+  gap: 18px;
 }
 
 .poster-panel,
@@ -134,7 +134,7 @@ onMounted(async () => {
 
 .hero-copy h2 {
   margin: 0;
-  font-size: 34px;
+  font-size: 30px;
   line-height: 1.08;
   color: var(--text-primary);
 }
@@ -150,7 +150,7 @@ onMounted(async () => {
 .hero-tags {
   display: flex;
   flex-wrap: nowrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hero-tags span,
@@ -158,7 +158,7 @@ onMounted(async () => {
 .notice-card span {
   display: inline-flex;
   white-space: nowrap;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: var(--bg-muted);
@@ -167,28 +167,31 @@ onMounted(async () => {
 
 .hero-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .stat-tile {
-  padding: 16px;
-  border-radius: 20px;
+  padding: 12px 14px;
+  border-radius: 18px;
   background: var(--bg-muted);
   border: 1px solid var(--border-soft);
+  min-width: 0;
 }
 
 .stat-tile span {
   display: block;
   color: var(--text-tertiary);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .stat-tile strong {
   display: block;
-  margin-top: 6px;
-  font-size: 26px;
+  margin-top: 4px;
+  font-size: 18px;
   color: var(--text-primary);
+  line-height: 1.15;
+  word-break: break-all;
 }
 
 .section-head {

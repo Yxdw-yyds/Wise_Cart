@@ -216,6 +216,7 @@ class RecommendationTracker {
     this.recommendations = new Map(); // recId -> { items, timestamp, actions }
     this.metrics = {
       totalRecommendations: 0,
+      totalImpressions: 0,
       totalClicks: 0,
       totalConversions: 0,
       ctr: 0,
@@ -229,8 +230,12 @@ class RecommendationTracker {
       userId,
       timestamp: Date.now(),
       actions: [],
+      clickedItems: new Set(),
+      convertedItems: new Set(),
     });
     this.metrics.totalRecommendations++;
+    this.metrics.totalImpressions += items.length;
+    this.updateMetrics();
   }
 
   recordAction(recId, itemId, action) {
@@ -243,10 +248,12 @@ class RecommendationTracker {
       timestamp: Date.now(),
     });
 
-    if (action === 'click') {
+    if (action === 'click' && !rec.clickedItems.has(itemId)) {
+      rec.clickedItems.add(itemId);
       this.metrics.totalClicks++;
     }
-    if (action === 'buy') {
+    if (action === 'buy' && !rec.convertedItems.has(itemId)) {
+      rec.convertedItems.add(itemId);
       this.metrics.totalConversions++;
     }
 
@@ -254,12 +261,12 @@ class RecommendationTracker {
   }
 
   updateMetrics() {
-    this.metrics.ctr = this.metrics.totalRecommendations > 0
-      ? Number((this.metrics.totalClicks / this.metrics.totalRecommendations * 100).toFixed(2))
+    this.metrics.ctr = this.metrics.totalImpressions > 0
+      ? Number((this.metrics.totalClicks / this.metrics.totalImpressions * 100).toFixed(2))
       : 0;
 
-    this.metrics.cvr = this.metrics.totalClicks > 0
-      ? Number((this.metrics.totalConversions / this.metrics.totalClicks * 100).toFixed(2))
+    this.metrics.cvr = this.metrics.totalImpressions > 0
+      ? Number((this.metrics.totalConversions / this.metrics.totalImpressions * 100).toFixed(2))
       : 0;
   }
 

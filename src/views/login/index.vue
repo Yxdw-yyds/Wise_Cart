@@ -5,7 +5,7 @@
       <section class="brand-panel">
         <div class="brand-logo" aria-label="WiseCart">
           <span class="logo-main">WiseCart</span>
-          <span class="logo-cn">慧购物</span>
+          <span class="logo-cn">慧购车</span>
         </div>
         <p class="brand-kicker">智慧零售平台</p>
         <h1>
