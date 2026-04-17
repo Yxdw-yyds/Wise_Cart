@@ -17,6 +17,48 @@ export function defineAccessConfig(memo) {
 }
 
 export function defineLayoutConfig(memo) {
+  const WORKBENCH_ROOT_NAME = "工作台";
+  const WORKBENCH_ALLOWED = [
+    "/home",
+    "/workbench/recommendation",
+    "/model-expo",
+    "/behavior-top50",
+    "/behavior-analysis",
+    "/operations-decision",
+  ];
+  const WORKBENCH_META = {
+    "/home": {
+      id: "workbench-overview",
+      name: "首页总览驾驶舱",
+      icon: "Odometer",
+    },
+    "/workbench/recommendation": {
+      id: "workbench-recommendation",
+      name: "推荐系统",
+      icon: "Promotion",
+    },
+    "/model-expo": {
+      id: "workbench-expo",
+      name: "推荐算法展厅",
+      icon: "DataAnalysis",
+    },
+    "/behavior-top50": {
+      id: "workbench-top50",
+      name: "个性化推荐 Top 50",
+      icon: "Search",
+    },
+    "/behavior-analysis": {
+      id: "workbench-behavior",
+      name: "用户行为分析",
+      icon: "TrendCharts",
+    },
+    "/operations-decision": {
+      id: "workbench-ops",
+      name: "运营决策",
+      icon: "Operation",
+    },
+  };
+
   const stripWorkflowMenu = (menus) => {
     if (!Array.isArray(menus)) return [];
     return menus
@@ -26,10 +68,61 @@ export function defineLayoutConfig(memo) {
         children: stripWorkflowMenu(item?.children),
       }));
   };
+
+  const normalizeWorkbenchMenu = (menus) => {
+    if (!Array.isArray(menus)) return [];
+    return menus.map((item) => {
+      if (item?.name !== WORKBENCH_ROOT_NAME) return item;
+
+      const deduped = new Map();
+      (Array.isArray(item.children) ? item.children : []).forEach((child) => {
+        if (!WORKBENCH_ALLOWED.includes(child?.url) || deduped.has(child.url)) {
+          return;
+        }
+        deduped.set(child.url, child);
+      });
+
+      const children = WORKBENCH_ALLOWED.map((url) => {
+        const child = deduped.get(url);
+        const meta = WORKBENCH_META[url];
+        if (!child || !meta) return null;
+        return {
+          ...child,
+          id: meta.id,
+          name: meta.name,
+          icon: meta.icon,
+        };
+      }).filter(Boolean);
+
+      return {
+        ...item,
+        id: "workbench-root",
+        name: WORKBENCH_ROOT_NAME,
+        icon: "HomeFilled",
+        url: "/home",
+        children,
+      };
+    });
+  };
+
   if (Array.isArray(memo?.menus)) {
-    memo.menus = stripWorkflowMenu(memo.menus);
+    memo.menus = normalizeWorkbenchMenu(stripWorkflowMenu(memo.menus));
   }
   return memo;
+}
+
+export function onBeforeMenuMount(menus) {
+  const stripWorkflowMenu = (items) => {
+    if (!Array.isArray(items)) return [];
+    return items
+      .filter((item) => item?.name !== "流程管理")
+      .map((item) => ({
+        ...item,
+        children: stripWorkflowMenu(item?.children),
+      }));
+  };
+
+  return stripWorkflowMenu(menus);
 }
 
 export default defineRuntimeConfig({});

@@ -1,7 +1,3 @@
-/**
- * 推荐服务层 - 增强的推荐逻辑与实时性
- */
-
 const baseURL = "";
 
 async function request(url, options = {}) {
@@ -13,11 +9,13 @@ async function request(url, options = {}) {
   return response.json();
 }
 
-// ============ 推荐模型配置 ============
+const CCDREC_ENDPOINT =
+  import.meta.env.VITE_CCDREC_ENDPOINT || "http://127.0.0.1:8000/recommend";
+
 const DEFAULT_MODELS = {
   ccdrec: {
     name: "CCDRec",
-    endpoint: "http://fastapi:54903/api/wise_cart_system/predict",
+    endpoint: CCDREC_ENDPOINT,
     weight: 0.6,
     timeout: 5000,
     enabled: true,
@@ -36,9 +34,8 @@ const DEFAULT_MODELS = {
   },
 };
 
-// ============ 推荐缓存 ============
 const recommendationCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5分钟
+const CACHE_TTL = 5 * 60 * 1000;
 
 function getCacheKey(userId, topK, filters = {}) {
   return `${userId}_${topK}_${JSON.stringify(filters)}`;
@@ -48,24 +45,18 @@ function isCacheValid(timestamp) {
   return Date.now() - timestamp < CACHE_TTL;
 }
 
-// ============ 单模型推荐 ============
-
-/**
- * 从 CCDRec 模型获取推荐
- */
 async function fetchCCDRecRecommendations(userId, topK = 10) {
   try {
     const response = await fetch(DEFAULT_MODELS.ccdrec.endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, top_k: topK }),
+      body: JSON.stringify({ user_id: userId, top_k: topK, filter_history: true }),
       signal: AbortSignal.timeout(DEFAULT_MODELS.ccdrec.timeout),
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const resData = await response.json();
     
-    // 兼容标准平台包装器 { success: true, data: { ... } } 或直接返回的数据
     const payload = resData.data || resData.content?.data || resData;
 
     return {
@@ -91,7 +82,6 @@ async function fetchCCDRecRecommendations(userId, topK = 10) {
           return num % 2000 === 0 ? 2000 : num % 2000;
         });
       
-      // Deduplicate to avoid multiple identical items
       const uniqueItems = Array.from(new Set(limitItems));
       
       return {
@@ -107,9 +97,6 @@ async function fetchCCDRecRecommendations(userId, topK = 10) {
   }
 }
 
-/**
- * 协同过滤推荐（本地实现）
- */
 function getBehaviorWeight(action) {
   return { view: 1, click: 2, fav: 3, cart: 4, buy: 5 }[action] || 0.5;
 }
@@ -233,9 +220,6 @@ function fetchCollaborativeRecommendations(userId, topK, userBehavior, allProduc
   }
 }
 
-/**
- * 内容推荐（基于热度和新品）
- */
 function fetchContentRecommendations(userId, topK, allProducts) {
   try {
     const scored = allProducts
@@ -263,11 +247,6 @@ function fetchContentRecommendations(userId, topK, allProducts) {
   }
 }
 
-// ============ 多模型融合 ============
-
-/**
- * 融合多个模型的推荐结果
- */
 function fuseRecommendations(results, topK = 10, runtimeModels = DEFAULT_MODELS) {
   const itemScores = new Map();
 
@@ -361,11 +340,6 @@ function rerankRecommendations(fusedItems, allProducts, userBehavior = [], topK 
     .slice(0, topK);
 }
 
-// ============ 推荐解释生成 ============
-
-/**
- * 为推荐结果生成解释
- */
 function generateExplanation(itemId, fusedResult, userProfile, product) {
   const { models, details } = fusedResult;
   const reasons = [];
@@ -386,7 +360,6 @@ function generateExplanation(itemId, fusedResult, userProfile, product) {
     }
   }
 
-  // 基于用户兴趣的解释
   if (userProfile?.categoryPercents?.[product?.category] > 20) {
     reasons.push(`你对${product?.category}类目兴趣较高`);
   }
@@ -398,20 +371,15 @@ function generateExplanation(itemId, fusedResult, userProfile, product) {
   };
 }
 
-// ============ 实时反馈循环 ============
-
 const feedbackQueue = [];
 const FEEDBACK_BATCH_SIZE = 10;
-const FEEDBACK_FLUSH_INTERVAL = 30000; // 30秒
+const FEEDBACK_FLUSH_INTERVAL = 30000;
 
-/**
- * 记录用户反馈
- */
 function recordFeedback(userId, itemId, action, metadata = {}) {
   feedbackQueue.push({
     userId,
     itemId,
-    action, // 'view', 'click', 'fav', 'cart', 'buy', 'skip'
+    action,
     timestamp: Date.now(),
     ...metadata,
   });
@@ -421,9 +389,6 @@ function recordFeedback(userId, itemId, action, metadata = {}) {
   }
 }
 
-/**
- * 批量上传反馈
- */
 async function flushFeedback() {
   if (feedbackQueue.length === 0) return;
 
@@ -436,15 +401,11 @@ async function flushFeedback() {
     console.log(`已上传 ${batch.length} 条反馈`);
   } catch (error) {
     console.error("反馈上传失败:", error);
-    // 重新加入队列
     feedbackQueue.unshift(...batch);
   }
 }
 
-// 定期刷新反馈
 setInterval(flushFeedback, FEEDBACK_FLUSH_INTERVAL);
-
-// ============ A/B 测试框架 ============
 
 const AB_TESTS = {
   model_weight_v1: {
@@ -458,9 +419,6 @@ const AB_TESTS = {
   },
 };
 
-/**
- * 获取用户的 A/B 测试分组
- */
 function getABTestVariant(userId, testKey) {
   const test = AB_TESTS[testKey];
   if (!test || !test.enabled) return "control";
@@ -473,9 +431,6 @@ function getABTestVariant(userId, testKey) {
   return variants[hash % variants.length];
 }
 
-/**
- * 为单次请求构建运行时模型配置
- */
 function buildRuntimeModels(userId, testKey) {
   const runtimeModels = Object.fromEntries(
     Object.entries(DEFAULT_MODELS).map(([key, config]) => [key, { ...config }])
@@ -514,11 +469,6 @@ function applyModelWeightOverrides(runtimeModels, modelWeights = null) {
   return runtimeModels;
 }
 
-// ============ 主推荐接口 ============
-
-/**
- * 获取融合推荐结果
- */
 export async function getEnhancedRecommendations({
   userId,
   topK = 10,
@@ -531,7 +481,6 @@ export async function getEnhancedRecommendations({
 }) {
   const cacheKey = getCacheKey(userId, topK, { abTestKey, modelWeights });
 
-  // 检查缓存
   if (useCache && recommendationCache.has(cacheKey)) {
     const cached = recommendationCache.get(cacheKey);
     if (isCacheValid(cached.timestamp)) {
@@ -539,13 +488,11 @@ export async function getEnhancedRecommendations({
     }
   }
 
-  // 应用 A/B 测试
   const runtime = buildRuntimeModels(userId, abTestKey);
   applyModelWeightOverrides(runtime.models, modelWeights);
 
   const fetchLimit = topK * 4;
   
-  // 并行获取多个模型的推荐
   const [ccdrec, collaborative, content] = await Promise.all([
     runtime.models.ccdrec.enabled
       ? fetchCCDRecRecommendations(userId, fetchLimit)
@@ -565,14 +512,12 @@ export async function getEnhancedRecommendations({
       : Promise.resolve({}),
   ]);
 
-  // 融合结果
   const results = [ccdrec, collaborative, content].filter(
     (r) => r.items?.length > 0
   );
   const fused = fuseRecommendations(results, Math.max(topK * 2, topK), runtime.models);
   const reranked = rerankRecommendations(fused, allProducts, userBehavior, topK);
 
-  // 生成解释
   const recommendations = reranked.map((item) => {
     const product = item.product;
     const explanation = generateExplanation(
@@ -602,7 +547,6 @@ export async function getEnhancedRecommendations({
     abTest: runtime.variant,
   };
 
-  // 缓存结果
   recommendationCache.set(cacheKey, {
     data: result,
     timestamp: Date.now(),
@@ -611,9 +555,6 @@ export async function getEnhancedRecommendations({
   return result;
 }
 
-/**
- * 获取推荐统计
- */
 export function getRecommendationStats() {
   return {
     cacheSize: recommendationCache.size,
@@ -627,14 +568,8 @@ export function getRecommendationStats() {
   };
 }
 
-/**
- * 清空缓存
- */
 export function clearRecommendationCache() {
   recommendationCache.clear();
 }
 
-/**
- * 导出反馈接口
- */
 export { recordFeedback, flushFeedback };
