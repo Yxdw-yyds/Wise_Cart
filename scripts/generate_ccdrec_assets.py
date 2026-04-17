@@ -145,12 +145,6 @@ def compute_ops(user_items, topk):
             "low": low,
             "total": active_users,
         },
-        "strategyReach": {
-            "recommend": topk_covered,
-            "recall": min(active_users, int(active_users * 0.82)),
-            "marketing": min(active_users, int(active_users * 0.57)),
-            "coupon": min(active_users, int(active_users * 0.36)),
-        },
         "groupEffects": [
             {
                 "group": "high_active",

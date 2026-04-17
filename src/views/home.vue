@@ -11,11 +11,10 @@
           <p class="hero-desc">基于 CCDRec 协同过滤模型 · 实时监控推荐效果与运营指标</p>
           <div class="hero-tags">
             <span class="htag"><span class="htag-dot pulse-dot"></span>系统在线</span>
-            <span class="htag">📊 数据集: {{ summary?.dataset || "baby" }}</span>
+          <span class="htag">📊 数据集: {{ summary?.dataset || "baby/Tmall" }}</span>
             <span class="htag">🕐 {{ timeStr }}</span>
           </div>
         </div>
-        <el-segmented v-model="rangeKey" :options="rangeOptions" class="range-seg" />
       </div>
     </div>
 
@@ -40,7 +39,7 @@
         <div ref="metricRef" class="chart-area"></div>
       </div>
       <div class="glass-card">
-        <h3 class="card-title"><span class="ct-icon">🎯</span>策略触达分布 <span class="card-note">{{ activeRange.label }}</span></h3>
+        <h3 class="card-title"><span class="ct-icon">🎯</span>推荐类目曝光 <span class="card-note">{{ activeRange.label }}</span></h3>
         <div ref="strategyRef" class="chart-area"></div>
       </div>
     </div>
@@ -48,7 +47,7 @@
     <!-- ====== Charts Row 2: User Segments + Conversion Funnel ====== -->
     <div class="chart-row" v-if="!isLoading">
       <div class="glass-card">
-        <h3 class="card-title"><span class="ct-icon">👥</span>用户活跃分层 <span class="card-note">高/中/低活跃</span></h3>
+        <h3 class="card-title"><span class="ct-icon">👥</span>用户活跃分层 <span class="card-note">{{ activeLayerThresholdText }}</span></h3>
         <div ref="segmentRef" class="chart-area"></div>
       </div>
       <div class="glass-card">
@@ -57,24 +56,8 @@
       </div>
     </div>
 
-    <!-- ====== Operational Insights + Hot Items ====== -->
+    <!-- ====== Hot Items ====== -->
     <div class="insight-row" v-if="!isLoading">
-      <!-- Insights -->
-      <div class="glass-card">
-        <h3 class="card-title"><span class="ct-icon">💡</span>运营决策建议 <span class="card-note">自动生成</span></h3>
-        <div class="insight-list">
-          <div v-for="(ins, idx) in insights" :key="idx" class="insight-item" :style="{ animationDelay: idx * 80 + 'ms', borderLeftColor: ins.color }">
-            <div class="ins-icon" :style="{ background: ins.color + '15', color: ins.color }">{{ ins.icon }}</div>
-            <div class="ins-body">
-              <div class="ins-title">{{ ins.title }}</div>
-              <div class="ins-desc">{{ ins.description }}</div>
-              <div class="ins-action" :style="{ color: ins.color }">{{ ins.action }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Hot Items -->
       <div class="glass-card">
         <h3 class="card-title"><span class="ct-icon">🔥</span>热门推荐商品 Top 8</h3>
         <div class="hot-list">
@@ -134,7 +117,7 @@ defineRouteMeta({
   name: "home",
   title: "首页总览驾驶舱",
   isKeepAlive: true,
-  icon: "HomeFilled",
+  icon: "Odometer",
   isAffix: true,
 });
 
@@ -212,11 +195,15 @@ const renderCharts = () => {
     ],
   });
 
-  // -- Strategy Reach: bar chart --
-  const labels = ["推荐", "召回", "营销", "优惠券"];
-  const colors = ["#4f46e5", "#3b82f6", "#f59e0b", "#10b981"];
-  const reachData = ["recommend", "recall", "marketing", "coupon"].map((k, i) => ({
-    value: Math.round((o.strategyReach[k] || 0) * (sf + i * 0.03)),
+  // -- Category exposure: bar chart --
+  const categoryExposure = o.recommendationStats?.categoryExposure || [];
+  const topCategories = categoryExposure.slice(0, 8);
+  const otherCount = categoryExposure.slice(8).reduce((sum, item) => sum + (item.count || 0), 0);
+  const displayCategories = otherCount > 0 ? [...topCategories, { name: "其他", count: otherCount }] : topCategories;
+  const labels = displayCategories.map((item) => item.name);
+  const colors = ["#4f46e5", "#3b82f6", "#0ea5e9", "#06b6d4", "#10b981", "#84cc16", "#f59e0b", "#f97316", "#94a3b8"];
+  const reachData = displayCategories.map((item, i) => ({
+    value: Math.round((item.count || 0) * (sf + i * 0.03)),
     itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: colors[i] }, { offset: 1, color: colors[i] + "66" }]) },
   }));
   strategyChart?.setOption({
@@ -269,23 +256,12 @@ const renderCharts = () => {
 const resizeAll = () => { metricChart?.resize(); strategyChart?.resize(); segmentChart?.resize(); funnelChart?.resize(); };
 watch(rangeKey, renderCharts);
 
-/* ---- Insights ---- */
-const insights = computed(() => {
-  if (!ops.value || !summary.value) return [];
-  const o = ops.value;
-  const out = [];
-  const hcr = o.groupEffects?.[0]?.convert / o.groupEffects?.[0]?.reach || 0;
-  if (hcr > 0.08) out.push({ icon: "📈", title: "高活跃用户表现优异", description: `转化率达 ${(hcr * 100).toFixed(1)}%，处于良好水平`, action: "建议：提高推荐频次，优先推送高利润商品和新品", color: "#10b981" });
-  else out.push({ icon: "⚠️", title: "高活跃用户转化率偏低", description: `转化率仅 ${(hcr * 100).toFixed(1)}%，有优化空间`, action: "建议：检查推荐质量和详情页体验", color: "#f59e0b" });
-  const hot = o.hotRecommendedItems || [];
-  const totalRec = hot.reduce((s, i) => s + (i.count || 0), 0);
-  const top1Pct = hot.length > 0 ? hot[0].count / totalRec : 0;
-  if (top1Pct > 0.1) out.push({ icon: "🔥", title: "推荐集中度偏高", description: `Top1 商品占 ${(top1Pct * 100).toFixed(1)}%，多样性不足`, action: "建议：增加多样性权重，避免推荐过度集中", color: "#ef4444" });
-  if (o.recommendCoverage > 0.85) out.push({ icon: "✅", title: "推荐覆盖率表现良好", description: `覆盖率 ${(o.recommendCoverage * 100).toFixed(1)}%，触达充分`, action: "建议：关注转化质量，优化个性化排序", color: "#10b981" });
-  return out;
-});
-
 /* ---- Hot Items ---- */
+const activeLayerThresholdText = computed(() => {
+  const meta = ops.value?.activeLayerMeta;
+  if (!meta) return "阈值：低活跃 < 1.5，中活跃 1.5-6，高活跃 ≥ 6";
+  return `阈值：低活跃 < ${meta.lowScoreThreshold}，中活跃 ${meta.lowScoreThreshold}-${meta.highScoreThreshold}，高活跃 ≥ ${meta.highScoreThreshold}`;
+});
 const hotItems = computed(() => (ops.value?.hotRecommendedItems || []).slice(0, 8));
 const maxCount = computed(() => Math.max(...hotItems.value.map(i => i.count), 1));
 const hotBarPct = (item) => ((item.count / maxCount.value) * 100).toFixed(1);
@@ -303,7 +279,7 @@ const alerts = computed(() => {
   if (!m || !o) return [];
   return [
     { icon: "🏆", title: "离线训练表现稳定", detail: `Best Epoch = ${m.bestEpoch}，Recall@50 = ${(m.bestValid["recall@50"] || 0).toFixed(4)}`, level: "good", levelText: "正常" },
-    { icon: "📡", title: "推荐覆盖率监控", detail: `当前覆盖率 ${((o.recommendCoverage || 0) * 100).toFixed(1)}%，策略触达处于正常区间`, level: "good", levelText: "正常" },
+    { icon: "📡", title: "推荐覆盖率监控", detail: `当前覆盖率 ${((o.recommendCoverage || 0) * 100).toFixed(1)}%，TopK 推荐覆盖稳定`, level: "good", levelText: "正常" },
     { icon: "⚡", title: "模型精度提醒", detail: `NDCG@10 = ${(m.bestValid["ndcg@10"] || 0).toFixed(4)}，建议关注排序质量`, level: "info", levelText: "关注" },
   ];
 });
@@ -392,24 +368,11 @@ onBeforeUnmount(() => {
 /* ====== Charts ====== */
 .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .chart-area { height: 280px; }
-.insight-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-
-/* ====== Insights ====== */
-.insight-list { display: flex; flex-direction: column; gap: 10px; }
-.insight-item {
-  display: flex; gap: 12px; padding: 14px; border-radius: 12px; background: rgba(0,0,0,.015);
-  border: 1px solid var(--border-soft); border-left: 4px solid;
-  transition: all .2s ease; animation: ins-in .4s ease forwards; opacity: 0;
-}
+.insight-row { display: grid; grid-template-columns: 1fr; gap: 18px; }
 @keyframes ins-in { to { opacity: 1; } }
-.insight-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,.06); }
-.ins-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-.ins-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.ins-desc { font-size: 12px; color: var(--text-secondary); margin: 3px 0; line-height: 1.5; }
-.ins-action { font-size: 11px; font-weight: 600; }
 
 /* ====== Hot Items ====== */
-.hot-list { display: flex; flex-direction: column; gap: 5px; }
+.hot-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
 .hot-row {
   display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px;
   transition: all .2s ease; animation: ins-in .4s ease forwards; opacity: 0;
@@ -466,9 +429,11 @@ onBeforeUnmount(() => {
   .compare-grid { grid-template-columns: 1fr; }
   .compare-vs { flex-direction: row; padding: 10px 0; }
   .vs-deltas { flex-direction: row; }
+  .hot-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
   .kpi-strip { grid-template-columns: repeat(2, 1fr); }
   .hero-inner { flex-direction: column; align-items: flex-start; }
+  .hot-list { grid-template-columns: 1fr; }
 }
 </style>

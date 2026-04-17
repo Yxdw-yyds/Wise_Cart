@@ -17,6 +17,18 @@ export function defineAccessConfig(memo) {
 }
 
 export function defineLayoutConfig(memo) {
+  const stripWorkflowMenu = (menus) => {
+    if (!Array.isArray(menus)) return [];
+    return menus
+      .filter((item) => item?.name !== "流程管理")
+      .map((item) => ({
+        ...item,
+        children: stripWorkflowMenu(item?.children),
+      }));
+  };
+  if (Array.isArray(memo?.menus)) {
+    memo.menus = stripWorkflowMenu(memo.menus);
+  }
   return memo;
 }
 
@@ -59,10 +71,17 @@ function ensureAdminBootstrap() {
 
   const sanitizeMenus = (menus) => {
     if (!Array.isArray(menus)) return [];
-    return menus.filter(
-      (item) =>
-        !staticWorkbenchIds.has(item?.id) && !staticWorkbenchUrls.has(item?.url)
-    );
+    return menus
+      .filter(
+        (item) =>
+          item?.name !== "流程管理" &&
+          !staticWorkbenchIds.has(item?.id) &&
+          !staticWorkbenchUrls.has(item?.url)
+      )
+      .map((item) => ({
+        ...item,
+        children: sanitizeMenus(item?.children),
+      }));
   };
 
   localStorage.setItem("loginRole", "admin");

@@ -3,7 +3,7 @@
     <section class="hero reveal-panel">
       <div>
         <div class="eyebrow">条件扩散重建</div>
-        <h2>扩散对象是 item_id_embedding，文本、图像和 timestep 只作为条件输入参与重建</h2>
+        <h2>扩散对象是 item_id_embedding，<br />文本、图像和 timestep 只作为条件输入参与重建</h2>
       </div>
 
     </section>

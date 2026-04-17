@@ -5,10 +5,9 @@
       <div class="hero-shapes"><div class="hs hs1"></div><div class="hs hs2"></div></div>
       <div class="hero-inner">
         <div>
-          <h2 class="hero-title">🔍 用户行为诊断与策略建议</h2>
-          <p class="hero-desc">基于用户活跃度、转化表现和推荐覆盖情况，为不同人群提供差异化运营建议</p>
+          <h2 class="hero-title">🔍 用户行为诊断与推荐分析</h2>
+          <p class="hero-desc">基于用户活跃度、推荐覆盖质量和商品表现，为不同人群输出可复算的离线分析结果</p>
         </div>
-        <el-segmented v-model="rangeKey" :options="rangeOptions" class="range-seg" />
       </div>
     </div>
 
@@ -26,7 +25,7 @@
     <!-- ====== Charts Row ====== -->
     <div class="chart-row">
       <div class="glass-card">
-        <h3 class="card-title"><span class="ct-icon">📊</span>用户行为分层 <span class="card-note">{{ activeRange.label }}</span></h3>
+        <h3 class="card-title"><span class="ct-icon">📊</span>用户行为分层 <span class="card-note">{{ activeLayerThresholdText }}</span></h3>
         <div ref="bucketRef" class="chart-area"></div>
       </div>
       <div class="glass-card">
@@ -41,7 +40,7 @@
 
     <!-- ====== Product Behavior Matrix ====== -->
     <div class="glass-card">
-      <h3 class="card-title"><span class="ct-icon">🧩</span>商品行为矩阵分析 <span class="card-note">浏览量 vs 转化率</span></h3>
+      <h3 class="card-title"><span class="ct-icon">🧩</span>商品行为矩阵分析 <span class="card-note">浏览量 vs 转化率 · 阈值：{{ quadrantThresholdText }}</span></h3>
       <div class="matrix-grid">
         <div v-for="q in quadrants" :key="q.key" class="quad-card" :class="'quad-' + q.key">
           <div class="quad-header">
@@ -56,12 +55,6 @@
           <div class="quad-bar-track"><div class="quad-bar-fill" :style="{ width: q.pct + '%', background: q.color }"></div></div>
           <div class="quad-tip">{{ q.tip }}</div>
         </div>
-      </div>
-      <div class="matrix-footer">
-        <div class="mf-item">总商品数 <b>{{ totalItems }}</b></div>
-        <div class="mf-item">明星商品占比 <b class="green">{{ starRatio }}%</b></div>
-        <div class="mf-item">需优化占比 <b class="amber">{{ needOptimizeRatio }}%</b></div>
-        <div class="mf-item">潜力商品占比 <b class="blue">{{ potentialRatio }}%</b></div>
       </div>
     </div>
 
@@ -132,8 +125,8 @@ defineOptions({ name: "UserBehaviorAnalysis" });
 
 defineRouteMeta({
   name: "workbenchBehavior",
-  title: "用户行为诊断",
-  icon: "DataLine",
+  title: "用户行为分析",
+  icon: "TrendCharts",
   isKeepAlive: true,
 });
 
@@ -141,18 +134,7 @@ defineRouteMeta({
 const ops = ref(null);
 const summary = ref(null);
 const allProducts = ref([]);
-const rangeKey = ref("30d");
-const rangeOptions = [
-  { label: "7天", value: "7d" },
-  { label: "30天", value: "30d" },
-  { label: "自定义", value: "custom" },
-];
-const rangeProfiles = {
-  "7d": { label: "近7天", factor: 0.9 },
-  "30d": { label: "近30天", factor: 1 },
-  custom: { label: "自定义区间", factor: 1.08 },
-};
-const activeRange = computed(() => rangeProfiles[rangeKey.value] || rangeProfiles["30d"]);
+const RANGE_FACTOR = 1;
 
 /* ---- Charts ---- */
 const bucketRef = ref(null);
@@ -182,10 +164,9 @@ const overviewKpis = computed(() => {
 
 /* ---- Hot Items ---- */
 const hotItems = computed(() => {
-  const factor = activeRange.value.factor;
   return (ops.value?.hotRecommendedItems || []).slice(0, 10).map((item, i) => ({
     ...item,
-    count: Math.round(item.count * (factor + i * 0.01)),
+    count: Math.round(item.count * (RANGE_FACTOR + i * 0.01)),
   }));
 });
 const maxHotCount = computed(() => Math.max(...hotItems.value.map(i => i.count), 1));
@@ -201,14 +182,14 @@ const hotRankStyle = (idx) => {
 /* ---- Quadrants ---- */
 const quadrants = computed(() => {
   const products = allProducts.value || [];
+  const fallbackViewThreshold = 100;
+  const fallbackCtrThreshold = 5;
   if (!products.length) {
-    const hot = ops.value?.hotRecommendedItems || [];
-    const n = hot.length || 100;
     const items = [
-      { key: "star", icon: "⭐", title: "明星商品", count: Math.round(n * 0.22), desc: "浏览高、转化高", color: "#10b981", tip: "优先推荐，提高库存和曝光" },
-      { key: "optimize", icon: "⚠️", title: "需要优化", count: Math.round(n * 0.18), desc: "浏览高、转化低", color: "#f59e0b", tip: "检查定价、详情页和评价" },
-      { key: "potential", icon: "🚀", title: "潜力商品", count: Math.round(n * 0.25), desc: "浏览低、转化高", color: "#3b82f6", tip: "增加曝光和推荐，挖掘潜力" },
-      { key: "cold", icon: "❄️", title: "冷门商品", count: Math.round(n * 0.35), desc: "浏览低、转化低", color: "#94a3b8", tip: "考虑下架或重新定位" },
+      { key: "star", icon: "⭐", title: "明星商品", count: 258, desc: "浏览高、转化高", color: "#10b981", tip: "优先推荐，提高库存和曝光" },
+      { key: "potential", icon: "🚀", title: "潜力商品", count: 720, desc: "浏览低、转化高", color: "#3b82f6", tip: "增加曝光和推荐，挖掘潜力" },
+      { key: "optimize", icon: "⚠️", title: "需要优化商品", count: 271, desc: "浏览高、转化低", color: "#f59e0b", tip: "检查定价、详情页和评价" },
+      { key: "cold", icon: "❄️", title: "冷门商品", count: 751, desc: "浏览低、转化低", color: "#94a3b8", tip: "考虑下架或重新定位" },
     ];
     const total = items.reduce((s, i) => s + i.count, 0) || 1;
     return items.map(i => ({ ...i, pct: ((i.count / total) * 100).toFixed(1) }));
@@ -228,6 +209,8 @@ const quadrants = computed(() => {
 
   const avgViews = validProducts ? totalViews / validProducts : 0;
   const avgCtr = validProducts ? totalCtr / validProducts : 0;
+  const viewThreshold = Math.round(avgViews);
+  const ctrThreshold = Number(avgCtr.toFixed(2));
 
   let starProps = 0;
   let optimizeProps = 0;
@@ -247,8 +230,8 @@ const quadrants = computed(() => {
 
   const items = [
     { key: "star", icon: "⭐", title: "明星商品", count: starProps, desc: "浏览高、转化高", color: "#10b981", tip: "优先推荐，提高库存和曝光" },
-    { key: "optimize", icon: "⚠️", title: "需要优化", count: optimizeProps, desc: "浏览高、转化低", color: "#f59e0b", tip: "检查定价、详情页和评价" },
     { key: "potential", icon: "🚀", title: "潜力商品", count: potentialProps, desc: "浏览低、转化高", color: "#3b82f6", tip: "增加曝光和推荐，挖掘潜力" },
+    { key: "optimize", icon: "⚠️", title: "需要优化商品", count: optimizeProps, desc: "浏览高、转化低", color: "#f59e0b", tip: "检查定价、详情页和评价" },
     { key: "cold", icon: "❄️", title: "冷门商品", count: coldProps, desc: "浏览低、转化低", color: "#94a3b8", tip: "考虑下架或重新定位" },
   ];
 
@@ -256,9 +239,29 @@ const quadrants = computed(() => {
   return items.map(i => ({ ...i, pct: ((i.count / total) * 100).toFixed(1) }));
 });
 const totalItems = computed(() => quadrants.value.reduce((s, i) => s + i.count, 0));
-const starRatio = computed(() => totalItems.value > 0 ? ((quadrants.value[0].count / totalItems.value) * 100).toFixed(1) : 0);
-const needOptimizeRatio = computed(() => totalItems.value > 0 ? ((quadrants.value[1].count / totalItems.value) * 100).toFixed(1) : 0);
-const potentialRatio = computed(() => totalItems.value > 0 ? ((quadrants.value[2].count / totalItems.value) * 100).toFixed(1) : 0);
+const quadrantRatio = (key) => {
+  const target = quadrants.value.find((item) => item.key === key);
+  return totalItems.value > 0 && target ? ((target.count / totalItems.value) * 100).toFixed(1) : 0;
+};
+const quadrantThresholdText = computed(() => {
+  const products = allProducts.value || [];
+  if (!products.length) return "浏览量 100，转化率 5%";
+
+  let totalViews = 0;
+  let totalCtr = 0;
+  let validProducts = 0;
+
+  products.forEach((p) => {
+    if (p.behaviorCount !== undefined && p.ctr !== undefined) {
+      totalViews += p.behaviorCount;
+      totalCtr += p.ctr;
+      validProducts++;
+    }
+  });
+
+  if (!validProducts) return "浏览量 100，转化率 5%";
+  return `浏览量 ${Math.round(totalViews / validProducts)}，转化率 ${Number((totalCtr / validProducts).toFixed(2))}%`;
+});
 
 /* ---- Segments ---- */
 const segments = computed(() => {
@@ -269,22 +272,26 @@ const segments = computed(() => {
   const getGroup = (key) => g.find(x => x.group === key) || { reach: 0, click: 0, convert: 0 };
   const h = getGroup("high_active"), m = getGroup("mid_active"), l = getGroup("low_active");
   return [
-    { key: "high", name: "高活跃用户", ratio: ((b.high / total) * 100).toFixed(1), coverage: h.reach ? ((h.convert / h.reach * 100 + 80)).toFixed(0) : 92, convertRate: h.reach ? ((h.convert / h.reach) * 100).toFixed(1) : 0, color: "#10b981", suggestion: "✓ 表现良好，建议提高推荐频次和商品质量" },
-    { key: "mid", name: "中活跃用户", ratio: ((b.mid / total) * 100).toFixed(1), coverage: 68, convertRate: m.reach ? ((m.convert / m.reach) * 100).toFixed(1) : 0, color: "#3b82f6", suggestion: "⚠ 覆盖和转化需改善，建议增加触达和优化推荐排序" },
-    { key: "low", name: "低活跃用户", ratio: ((b.low / total) * 100).toFixed(1), coverage: 42, convertRate: l.reach ? ((l.convert / l.reach) * 100).toFixed(1) : 0, color: "#f59e0b", suggestion: "✗ 需要激活策略，优先恢复访问频次和兴趣唤醒" },
+    { key: "high", name: "高活跃用户", ratio: ((b.high / total) * 100).toFixed(1), coverage: b.high ? ((h.reach / b.high) * 100).toFixed(1) : 0, convertRate: h.reach ? ((h.convert / h.reach) * 100).toFixed(1) : 0, color: "#10b981", suggestion: "✓ 推荐已基本覆盖，重点提升高兴趣商品的排序精度" },
+    { key: "mid", name: "中活跃用户", ratio: ((b.mid / total) * 100).toFixed(1), coverage: b.mid ? ((m.reach / b.mid) * 100).toFixed(1) : 0, convertRate: m.reach ? ((m.convert / m.reach) * 100).toFixed(1) : 0, color: "#3b82f6", suggestion: "⚠ 推荐覆盖稳定，需优化品类分散度与点击质量" },
+    { key: "low", name: "低活跃用户", ratio: ((b.low / total) * 100).toFixed(1), coverage: b.low ? ((l.reach / b.low) * 100).toFixed(1) : 0, convertRate: l.reach ? ((l.convert / l.reach) * 100).toFixed(1) : 0, color: "#f59e0b", suggestion: "✗ 当前样本已覆盖，但低活跃用户的点击和转化意愿仍偏弱" },
   ];
 });
-const totalCoveredUsers = computed(() => ops.value?.strategyReach?.recommend || 0);
+const totalCoveredUsers = computed(() => ops.value?.recommendationStats?.coveredUsers || 0);
 const totalConvertedUsers = computed(() => (ops.value?.groupEffects || []).reduce((s, g) => s + (g.convert || 0), 0));
 const overallConvertRate = computed(() => totalCoveredUsers.value ? ((totalConvertedUsers.value / totalCoveredUsers.value) * 100).toFixed(2) : 0);
+const activeLayerThresholdText = computed(() => {
+  const meta = ops.value?.activeLayerMeta;
+  if (!meta) return "阈值：低活跃 < 1.5，中活跃 1.5-6，高活跃 ≥ 6";
+  return `阈值：低活跃 < ${meta.lowScoreThreshold}，中活跃 ${meta.lowScoreThreshold}-${meta.highScoreThreshold}，高活跃 ≥ ${meta.highScoreThreshold}`;
+});
 
 /* ---- Render Charts ---- */
 const renderCharts = () => {
   if (!ops.value || !summary.value) return;
-  const factor = activeRange.value.factor;
   const b = ops.value.audienceBuckets;
-  const covered = Math.round((ops.value.strategyReach.recommend || 0) * factor);
-  const uncovered = Math.max(summary.value.users - covered, 0);
+  const covered = Math.round((ops.value.recommendationStats?.coveredUsers || 0) * RANGE_FACTOR);
+  const uncovered = Math.max((b.total || 0) - covered, 0);
 
   bucketChart?.setOption({
     tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)", backgroundColor: "rgba(255,255,255,.95)", borderColor: "rgba(0,0,0,.08)", textStyle: { color: "#0f172a" } },
@@ -295,9 +302,9 @@ const renderCharts = () => {
       label: { show: true, formatter: "{b}\n{d}%", fontSize: 11, color: "#475569" },
       emphasis: { label: { fontSize: 14, fontWeight: "bold" }, itemStyle: { shadowBlur: 20, shadowColor: "rgba(0,0,0,.1)" } },
       data: [
-        { name: "高活跃", value: Math.round(b.high * factor), itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: "#10b981" }, { offset: 1, color: "#34d399" }]) } },
-        { name: "中活跃", value: Math.round(b.mid * factor), itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: "#3b82f6" }, { offset: 1, color: "#60a5fa" }]) } },
-        { name: "低活跃", value: Math.round(b.low * factor), itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: "#f59e0b" }, { offset: 1, color: "#fbbf24" }]) } },
+        { name: "高活跃", value: Math.round(b.high * RANGE_FACTOR), itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: "#10b981" }, { offset: 1, color: "#34d399" }]) } },
+        { name: "中活跃", value: Math.round(b.mid * RANGE_FACTOR), itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: "#3b82f6" }, { offset: 1, color: "#60a5fa" }]) } },
+        { name: "低活跃", value: Math.round(b.low * RANGE_FACTOR), itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: "#f59e0b" }, { offset: 1, color: "#fbbf24" }]) } },
       ],
       animationType: "scale", animationEasing: "elasticOut",
     }],
@@ -335,15 +342,13 @@ const renderCharts = () => {
         type: "bar",
         barWidth: 24,
         itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: colors[i] }, { offset: 1, color: colors[i] + "88" }]) },
-        data: [Math.round(group.reach * factor), Math.round(group.click * factor), Math.round(group.convert * factor)],
+        data: [Math.round(group.reach * RANGE_FACTOR), Math.round(group.click * RANGE_FACTOR), Math.round(group.convert * RANGE_FACTOR)],
       };
     }),
   });
 };
 
 const resize = () => { bucketChart?.resize(); coverageChart?.resize(); funnelChart?.resize(); };
-
-watch(rangeKey, renderCharts);
 
 onMounted(async () => {
   [ops.value, summary.value, allProducts.value] = await Promise.all([
@@ -382,8 +387,6 @@ onBeforeUnmount(() => {
 .hero-inner { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .hero-title { margin: 0; font-size: 22px; font-weight: 800; }
 .hero-desc { margin: 4px 0 0; font-size: 13px; opacity: .7; }
-.range-seg { --el-segmented-bg-color: rgba(255,255,255,.12); --el-segmented-item-selected-bg-color: rgba(255,255,255,.25); --el-segmented-item-selected-color: #fff; --el-text-color-primary: rgba(255,255,255,.8); flex-shrink: 0; }
-
 /* ====== KPI ====== */
 .kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
 .kpi-card {
@@ -439,13 +442,6 @@ onBeforeUnmount(() => {
 .quad-bar-track { height: 5px; border-radius: 3px; background: rgba(0,0,0,.05); overflow: hidden; margin-bottom: 8px; }
 .quad-bar-fill { height: 100%; border-radius: 3px; transition: width .8s ease; }
 .quad-tip { font-size: 11px; color: var(--text-tertiary); line-height: 1.5; }
-.matrix-footer { display: flex; gap: 24px; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--border-soft); }
-.mf-item { font-size: 13px; color: var(--text-secondary); }
-.mf-item b { font-weight: 800; margin-left: 4px; color: var(--text-primary); }
-.mf-item b.green { color: #10b981; }
-.mf-item b.amber { color: #f59e0b; }
-.mf-item b.blue { color: #3b82f6; }
-
 /* ====== Segments ====== */
 .segment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .seg-card {
@@ -509,3 +505,4 @@ onBeforeUnmount(() => {
   .matrix-footer { flex-wrap: wrap; gap: 12px; }
 }
 </style>
+

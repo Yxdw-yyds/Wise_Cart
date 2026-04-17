@@ -263,11 +263,6 @@ def main():
             "low": low,
             "total": len(user_behavior_counts),
         },
-        "strategyReach": {
-            "recommend": covered,
-            "search": int(unique_users_in_behaviors * 0.45),
-            "push": int(unique_users_in_behaviors * 0.28),
-        },
         "hotRecommendedItems": hot_items,
         "conversionFunnel": {
             "view": behavior_action_counter.get("view", 0),

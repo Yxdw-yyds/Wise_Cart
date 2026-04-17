@@ -64,7 +64,7 @@ defineOptions({ name: "ModelExpoPage" });
 defineRouteMeta({
   name: "modelExpo",
   title: "推荐算法展厅",
-  icon: "DataBoard",
+  icon: "DataAnalysis",
   isKeepAlive: true,
 });
 

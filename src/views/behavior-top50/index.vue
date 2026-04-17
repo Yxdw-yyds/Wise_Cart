@@ -65,7 +65,7 @@
 
           <!-- Center: Interest Bars -->
           <div class="profile-col-bars">
-            <h4 class="col-title"><span class="dot" style="background:var(--accent-primary)"></span>兴趣画像分布</h4>
+            <h4 class="col-title"><span class="dot" style="background:var(--accent-primary)"></span>推荐品类分布</h4>
             <div class="bars-list">
               <div
                 v-for="([cat, pct], bi) in topCategories"
@@ -118,18 +118,20 @@
 
     <!-- ============ Category Filter ============ -->
     <div v-if="userRecRows.length" class="filter-strip">
-      <div class="filter-scroll">
-        <button
-          v-for="c in categoryTabs"
-          :key="c.key"
-          class="fpill"
-          :class="{ active: filterCat === c.key }"
-          @click="filterCat = c.key"
-        >
-          <span v-if="c.color" class="fpill-dot" :style="{ background: c.color }"></span>
-          {{ c.label }}
-          <span class="fpill-n">{{ c.count }}</span>
-        </button>
+      <div class="filter-scroll-wrap">
+        <div class="filter-scroll">
+          <button
+            v-for="c in categoryTabs"
+            :key="c.key"
+            class="fpill"
+            :class="{ active: filterCat === c.key }"
+            @click="filterCat = c.key"
+          >
+            <span v-if="c.color" class="fpill-dot" :style="{ background: c.color }"></span>
+            {{ c.label }}
+            <span class="fpill-n">{{ c.count }}</span>
+          </button>
+        </div>
       </div>
       <span class="result-hint">共 {{ filteredRecs.length }} 条推荐</span>
     </div>
@@ -194,11 +196,11 @@ import { computed, nextTick, onMounted, ref } from "vue";
 import { defineRouteMeta } from "@kesplus/kesplus";
 import { loadUserTopK, loadUserRecommendationWithImages } from "@/composables/useCcdrecData";
 
-defineOptions({ name: "推荐前50查询页面" });
+defineOptions({ name: "个性化推荐 Top 50 页面" });
 
 defineRouteMeta({
   name: "workbenchBehaviorTop50",
-  title: "推荐前50查询",
+  title: "个性化推荐 Top 50",
   icon: "Search",
   isKeepAlive: true,
 });
@@ -440,17 +442,19 @@ onMounted(async () => {
 .pfade-leave-to { opacity: 0; transform: translateY(-10px); }
 
 /* ================== filter ================== */
-.filter-strip { display: flex; align-items: center; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; min-height: 44px; padding: 4px 0; }
+.filter-strip { display: flex; align-items: center; gap: 12px; flex-shrink: 0; min-height: 44px; padding: 4px 0; min-width: 0; }
 .filter-strip::-webkit-scrollbar { height: 0; }
-.filter-scroll { display: flex; gap: 8px; padding: 2px; flex-shrink: 0; flex-wrap: wrap; }
-.result-hint { margin-left: auto; font-size: 13px; color: var(--text-tertiary); white-space: nowrap; font-weight: 600; flex-shrink: 0; }
+.filter-scroll-wrap { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.filter-scroll { display: flex; gap: 8px; padding: 2px; min-width: max-content; width: max-content; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; }
+.filter-scroll::-webkit-scrollbar { height: 0; }
+.result-hint { margin-left: auto; font-size: 13px; color: var(--text-tertiary); white-space: nowrap; font-weight: 600; flex: 0 0 auto; }
 
-.fpill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(148,163,184,.2); background: rgba(255,255,255,.7); backdrop-filter: blur(8px); font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all .25s ease; flex-shrink: 0; }
+.fpill { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 18px; border: 1px solid rgba(148,163,184,.2); background: rgba(255,255,255,.7); backdrop-filter: blur(8px); font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all .25s ease; flex-shrink: 0; }
 .fpill:hover { background: rgba(79,70,229,.06); border-color: rgba(79,70,229,.2); }
 .fpill.active { background: linear-gradient(135deg,var(--accent-primary),var(--accent-secondary)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(79,70,229,.3); }
-.fpill-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.fpill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .fpill.active .fpill-dot { background: #fff !important; }
-.fpill-n { padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; background: rgba(0,0,0,.06); }
+.fpill-n { padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(0,0,0,.06); }
 .fpill.active .fpill-n { background: rgba(255,255,255,.25); color: #fff; }
 
 /* ================== cards grid ================== */

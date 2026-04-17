@@ -23,7 +23,7 @@
           </div>
           <div class="stat-card">
             <span>运营洞察</span>
-            <strong>实时策略触达分析</strong>
+              <strong>推荐覆盖与质量分析</strong>
           </div>
         </div>
       </section>

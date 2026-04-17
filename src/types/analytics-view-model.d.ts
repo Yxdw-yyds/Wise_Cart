@@ -98,7 +98,19 @@ export interface UserTopK {
 export interface OpsSegmentEffect {
   dataset: string;
   audienceBuckets: { high: number; mid: number; low: number; total: number };
-  strategyReach: { recommend: number; recall: number; marketing: number; coupon: number };
-  groupEffects: Array<{ group: string; reach: number; click: number; convert: number; roi: number }>;
+  groupEffects: Array<{ group: string; reach: number; click: number; convert: number; ctrRate?: number; convertRate?: number }>;
   recommendCoverage: number;
+  recommendationStats?: {
+    coveredUsers: number;
+    uncoveredUsers: number;
+    exposureCount: number;
+    avgItemsPerUser: number;
+    uniqueRecommendedItems: number;
+    avgCtr: number;
+    expectedClicks: number;
+    expectedConversions: number;
+    top1Concentration: number;
+    categoryExposure: Array<{ name: string; count: number }>;
+    priceBandExposure: Array<{ name: string; count: number }>;
+  };
 }

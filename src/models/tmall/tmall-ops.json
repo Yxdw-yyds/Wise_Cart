@@ -5,11 +5,6 @@
     "low": 696,
     "total": 869
   },
-  "strategyReach": {
-    "recommend": 625,
-    "search": 391,
-    "push": 243
-  },
   "hotRecommendedItems": [
     {
       "itemId": "3334626",

@@ -52,7 +52,7 @@ function isCacheValid(timestamp) {
 
 /**
  * 从 CCDRec 模型获取推荐
-
+ */
 async function fetchCCDRecRecommendations(userId, topK = 10) {
   try {
     const response = await fetch(DEFAULT_MODELS.ccdrec.endpoint, {

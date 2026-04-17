@@ -6,12 +6,6 @@
     "low": 4382,
     "total": 19445
   },
-  "strategyReach": {
-    "recommend": 19445,
-    "recall": 15944,
-    "marketing": 11083,
-    "coupon": 7000
-  },
   "groupEffects": [
     { "group": "high_active", "reach": 4382, "click": 1270, "convert": 482, "roi": 2.1 },
     { "group": "mid_active", "reach": 10681, "click": 2349, "convert": 855, "roi": 1.7 },

@@ -125,10 +125,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .expo-scroll {
-  height: calc(100vh - 120px);
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 6px;
+  padding-bottom: 40px;
+  box-sizing: border-box;
   scrollbar-gutter: stable;
 }
 

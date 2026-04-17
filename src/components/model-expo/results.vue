@@ -3,16 +3,10 @@
     <section class="hero reveal-panel">
       <div>
         <div class="eyebrow">结果与案例</div>
-        <h2>把真实 Top50、离线指标、配置快照和代码回放串成一块结果面板</h2>
+        <h2>真实 Top50+离线指标+配置快照</h2>
 
       </div>
       <div class="hero-side">
-        <div class="select-box">
-          <span>查看用户案例</span>
-          <el-select v-model="selectedUserId" placeholder="请选择用户 ID" filterable>
-            <el-option v-for="userId in userOptions" :key="userId" :label="`用户 ${userId}`" :value="userId" />
-          </el-select>
-        </div>
         <div class="summary-strip">
           <div class="summary-chip"><span>最佳 Epoch</span><strong>{{ metrics?.bestEpoch ?? '-' }}</strong></div>
           <div class="summary-chip"><span>推荐覆盖率</span><strong>{{ coverageText }}</strong></div>
@@ -26,11 +20,11 @@
       <article class="panel reveal-panel">
         <header class="section-head compact">
           <div>
-            <h3>结果摘要</h3>
+            <h3>配置快照</h3>
           </div>
         </header>
-        <div class="facts-grid">
-          <div class="fact-card" v-for="fact in resultFacts" :key="fact.label">
+        <div class="facts-grid facts-grid--config">
+          <div class="fact-card" v-for="fact in configFacts" :key="fact.label">
             <span>{{ fact.label }}</span>
             <strong>{{ fact.value }}</strong>
           </div>
@@ -44,20 +38,11 @@
             <p style="margin: 8px 0 0; color: var(--text-tertiary); font-size: 14px;">用真实指标文件恢复的趋势曲线，展示排序质量随 epoch 的变化。</p>
           </div>
         </header>
-        <div ref="trendRef" class="chart" style="height: 380px;"></div>
+        <div ref="trendRef" class="chart chart--trend"></div>
       </article>
     </section>
 
     <section class="chart-grid">
-      <article class="panel reveal-panel">
-        <header class="section-head compact">
-          <div>
-            <h3>关键指标对比</h3>
-          </div>
-        </header>
-        <div ref="metricRef" class="chart"></div>
-      </article>
-
       <article class="panel reveal-panel">
         <header class="section-head compact">
           <div>
@@ -73,7 +58,7 @@
     <section class="case-board reveal-panel">
       <header class="section-head">
         <div>
-          <h3>用户 {{ selectedUserId }} 的 Top50 案例</h3>
+          <h3>用户 0 的 Top50 案例</h3>
         </div>
       </header>
       <div class="case-grid">
@@ -83,9 +68,6 @@
           <div class="confidence">
             <span>推荐置信度</span>
             <strong>{{ item.confidence }}</strong>
-          </div>
-          <div class="tag-list">
-            <span v-for="tag in item.reasonTags" :key="tag">{{ tag }}</span>
           </div>
         </article>
       </div>
@@ -97,7 +79,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import * as echarts from "echarts";
 import { loadDatasetSummary, loadOfflineMetrics, loadOpsAnalytics, loadUserTopK } from "@/composables/useCcdrecData";
-import { buildConfidence, buildReasonTags, configSnapshot, inferenceSteps, metricTrendSeries } from "@/models/ccdrec/expo-data";
+import { buildConfidence, configSnapshot, metricTrendSeries } from "@/models/ccdrec/expo-data";
 
 defineOptions({ name: "ModelExpoResults" });
 
@@ -105,22 +87,16 @@ const summary = ref(null);
 const metrics = ref(null);
 const ops = ref(null);
 const topkUsers = ref({});
-const selectedUserId = ref("");
-const metricRef = ref(null);
 const hotRef = ref(null);
 const trendRef = ref(null);
-let metricChart = null;
 let hotChart = null;
 let trendChart = null;
 
-const userOptions = computed(() => Object.keys(topkUsers.value).slice(0, 120));
-
 const visibleRecommendations = computed(() => {
-  const list = topkUsers.value[selectedUserId.value] || [];
-  return list.slice(0, 16).map((itemId, index) => ({
+  const list = topkUsers.value["0"] || [];
+  return list.slice(0, 50).map((itemId, index) => ({
     rank: index + 1,
     itemId,
-    reasonTags: buildReasonTags(selectedUserId.value, index),
     confidence: buildConfidence(index),
   }));
 });
@@ -130,81 +106,25 @@ const coverageText = computed(() => {
   return `${Math.round((ops.value.recommendCoverage || 0) * 100)}%`;
 });
 
-const resultFacts = computed(() => {
-  if (!summary.value || !metrics.value) return [];
-  return [
-    { label: "用户数", value: summary.value.users.toLocaleString("zh-CN") },
-    { label: "商品数", value: summary.value.items.toLocaleString("zh-CN") },
-    { label: "最佳验证 Recall@20", value: metrics.value.bestValid["recall@20"].toFixed(4) },
-    { label: "最佳测试 NDCG@20", value: metrics.value.bestTest["ndcg@20"].toFixed(4) },
-    { label: "Precision@20", value: metrics.value.bestTest["precision@20"].toFixed(4) },
-    { label: "MAP@20", value: metrics.value.bestTest["map@20"].toFixed(4) },
-  ];
-});
-
 const configFacts = computed(() => [
-  { label: "embedding_size", value: configSnapshot.embeddingSize },
-  { label: "feat_embed_dim", value: configSnapshot.featEmbedDim },
-  { label: "timesteps", value: configSnapshot.timesteps },
-  { label: "beta_sche", value: configSnapshot.betaSchedule },
-  { label: "n_mm_layers", value: configSnapshot.nMmLayers },
-  { label: "n_ui_layers", value: configSnapshot.nUiLayers },
-  { label: "curriculum_start_epoch", value: configSnapshot.curriculumStartEpoch },
-  { label: "curriculum_step", value: configSnapshot.curriculumStep },
-  { label: "curriculum_end_epoch", value: configSnapshot.curriculumEndEpoch },
-  { label: "sample_k", value: configSnapshot.sampleK },
+  { label: "嵌入维度", value: configSnapshot.embeddingSize },
+  { label: "特征嵌入维度", value: configSnapshot.featEmbedDim },
+  { label: "扩散步数", value: configSnapshot.timesteps },
+  { label: "噪声调度", value: configSnapshot.betaSchedule },
+  { label: "多模态图层数", value: configSnapshot.nMmLayers },
+  { label: "交互图层数", value: configSnapshot.nUiLayers },
+  { label: "课程起始 Epoch", value: configSnapshot.curriculumStartEpoch },
+  { label: "课程步长", value: configSnapshot.curriculumStep },
+  { label: "课程结束 Epoch", value: configSnapshot.curriculumEndEpoch },
+  { label: "采样系数", value: configSnapshot.sampleK },
 ]);
-
-function renderMetricChart() {
-  if (!metricChart || !metrics.value) return;
-  metricChart.setOption({
-    tooltip: { trigger: "axis" },
-    legend: { top: 8, textStyle: { color: "#475569" } },
-    grid: { left: 36, right: 18, top: 48, bottom: 28 },
-    xAxis: {
-      type: "category",
-      data: ["Recall@20", "NDCG@20", "Precision@20", "MAP@20"],
-      axisLabel: { color: "#64748b" },
-      axisLine: { lineStyle: { color: "rgba(30,58,138,0.18)" } },
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { color: "#64748b" },
-      splitLine: { lineStyle: { color: "rgba(30,58,138,0.08)" } },
-    },
-    series: [
-      {
-        name: "最佳验证集",
-        type: "bar",
-        data: [
-          metrics.value.bestValid["recall@20"],
-          metrics.value.bestValid["ndcg@20"],
-          metrics.value.bestValid["precision@20"],
-          metrics.value.bestValid["map@20"],
-        ],
-        itemStyle: { color: "#3b82f6", borderRadius: 10 },
-      },
-      {
-        name: "最佳测试集",
-        type: "bar",
-        data: [
-          metrics.value.bestTest["recall@20"],
-          metrics.value.bestTest["ndcg@20"],
-          metrics.value.bestTest["precision@20"],
-          metrics.value.bestTest["map@20"],
-        ],
-        itemStyle: { color: "#f59e0b", borderRadius: 10 },
-      },
-    ],
-  });
-}
 
 function renderHotChart() {
   if (!hotChart || !ops.value) return;
   const topItems = (ops.value.hotRecommendedItems || []).slice(0, 15);
   hotChart.setOption({
     tooltip: { trigger: "axis" },
-    grid: { left: 50, right: 18, top: 20, bottom: 30 },
+    grid: { left: 76, right: 18, top: 20, bottom: 30 },
     xAxis: {
       type: "value",
       axisLabel: { color: "#64748b" },
@@ -213,7 +133,7 @@ function renderHotChart() {
     yAxis: {
       type: "category",
       data: topItems.map((item) => `商品 ${item.itemId}`),
-      axisLabel: { color: "#64748b" },
+      axisLabel: { color: "#64748b", margin: 10 },
       axisLine: { lineStyle: { color: "rgba(30,58,138,0.18)" } },
     },
     series: [
@@ -258,7 +178,6 @@ function renderTrendChart() {
 }
 
 function resize() {
-  metricChart?.resize();
   hotChart?.resize();
   trendChart?.resize();
 }
@@ -275,13 +194,10 @@ onMounted(async () => {
   metrics.value = metricsData;
   ops.value = opsData;
   topkUsers.value = topkData;
-  selectedUserId.value = Object.keys(topkData)[0] || "";
 
   await nextTick();
-  metricChart = metricRef.value ? echarts.init(metricRef.value) : null;
   hotChart = hotRef.value ? echarts.init(hotRef.value) : null;
   trendChart = trendRef.value ? echarts.init(trendRef.value) : null;
-  renderMetricChart();
   renderHotChart();
   renderTrendChart();
   window.addEventListener("resize", resize);
@@ -289,7 +205,6 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resize);
-  metricChart?.dispose();
   hotChart?.dispose();
   trendChart?.dispose();
 });
@@ -297,10 +212,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .expo-scroll {
-  height: calc(100vh - 120px);
+  height: calc(100vh - 156px);
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 6px;
+  padding-bottom: 128px;
+  box-sizing: border-box;
   scrollbar-gutter: stable;
 }
 
@@ -344,7 +261,7 @@ onBeforeUnmount(() => {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.85fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.7fr);
   gap: 24px;
 }
 
@@ -375,15 +292,6 @@ onBeforeUnmount(() => {
   gap: 20px;
 }
 
-.select-box {
-  display: grid;
-  gap: 8px;
-}
-
-.select-box span {
-  color: var(--text-primary);
-}
-
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -407,8 +315,15 @@ onBeforeUnmount(() => {
 .chart-grid,
 .path-grid {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 24px;
+}
+
+.snapshot-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.85fr) !important;
+}
+
+.chart-grid {
+  grid-template-columns: 1fr !important;
 }
 
 .path-grid {
@@ -449,32 +364,40 @@ onBeforeUnmount(() => {
   width: 100%;
 }
 
+.chart--trend {
+  height: 320px;
+}
+
 .case-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 10px;
   margin-top: 18px;
 }
 
 .case-card {
-  padding: 24px;
-  border-radius: 22px;
+  padding: 12px;
+  border-radius: 14px;
   background: var(--bg-muted);
   border: 1px solid var(--border-soft);
+  min-width: 0;
 }
 
 .case-rank {
   display: inline-flex;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 999px;
   background: rgba(19, 194, 194, 0.14);
   color: var(--accent-primary);
+  font-size: 11px;
 }
 
 .case-card h4 {
-  margin: 14px 0 12px;
+  margin: 8px 0 8px;
   color: var(--text-primary);
-  font-size: 26px;
+  font-size: 14px;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .confidence {
@@ -486,27 +409,29 @@ onBeforeUnmount(() => {
 
 .confidence span {
   color: var(--text-tertiary);
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .confidence strong {
   color: #b45309;
-  font-size: 26px;
+  font-size: 16px;
 }
 
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .tag-list span {
-  padding: 7px 12px;
+  padding: 4px 7px;
   border-radius: 999px;
   background: rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.16);
   color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.2;
 }
 
 .facts-grid {
@@ -517,7 +442,13 @@ onBeforeUnmount(() => {
 }
 
 .facts-grid--config {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.facts-grid--config .fact-card {
+  padding: 16px 18px;
+  border-radius: 16px;
 }
 
 @keyframes reveal-in {
@@ -535,7 +466,7 @@ onBeforeUnmount(() => {
 @media (max-width: 1280px) {
   .case-grid,
   .facts-grid--config {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -554,7 +485,7 @@ onBeforeUnmount(() => {
   .case-grid,
   .facts-grid,
   .facts-grid--config {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -563,7 +494,7 @@ onBeforeUnmount(() => {
   .facts-grid,
   .facts-grid--config,
   .summary-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -585,6 +516,16 @@ onBeforeUnmount(() => {
   color: var(--text-primary);
   font-size: 24px;
   word-break: break-all;
+}
+
+.facts-grid--config .fact-card span {
+  font-size: 12px;
+}
+
+.facts-grid--config .fact-card strong {
+  font-size: 18px;
+  margin-top: 4px;
+  word-break: break-word;
 }
 
 </style>
